@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     zip \
     && docker-php-ext-install intl mbstring mysqli pdo pdo_mysql zip
 
+# Copia la configuración de Apache
+COPY apache-config/000-default.conf /etc/apache2/sites-available/000-default.conf
+
 # Habilitar mod_rewrite en Apache (CodeIgniter lo necesita)
 RUN a2enmod rewrite
 
