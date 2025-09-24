@@ -11,6 +11,6 @@ class Home extends BaseController
 
     public function dashboard(): string
     {
-        return view('dashboard');
+        return view('mobile');
     }
 }

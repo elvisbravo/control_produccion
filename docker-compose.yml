@@ -14,13 +14,13 @@ services:
 
   db:
     image: mysql:8.0
-    container_name: ci4_db
+    container_name: mysql_produccion
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ci4db
-      MYSQL_USER: ci4user
-      MYSQL_PASSWORD: ci4pass
+      MYSQL_DATABASE: control_produccion
+      MYSQL_USER: grupoes_produccion
+      MYSQL_PASSWORD: grupoes2025
     ports:
       - "3307:3306"
     volumes:
