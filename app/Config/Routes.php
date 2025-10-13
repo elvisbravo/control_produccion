@@ -5,6 +5,10 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+$routes->get('/', 'Auth::signin');
 
-$routes->get('/dashboard', 'Home::dashboard');
+$routes->get('/home', 'Home::index');
+$routes->get('/mobile', 'Home::dashboard');
+
+$routes->get('/nueva-entrega', 'Entregas::nuevaEntrega');
+$routes->get('/control-entregas', 'Entregas::controlEntregas');

@@ -559,6 +559,33 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Seguridad -->
+            <div class="nav-item">
+                <button class="nav-link collapsed" data-bs-toggle="collapse" data-bs-target="#seguridadSubmenu">
+                    <i class="bi bi-lock"></i>
+                    <span>Seguridad</span>
+                    <i class="bi bi-chevron-down arrow"></i>
+                </button>
+                <div class="collapse submenu" id="seguridadSubmenu">
+                    <button class="nav-link" data-tab="configuracion">
+                        <i class="bi bi-sliders"></i>
+                        <span>Usuarios</span>
+                    </button>
+                    <button class="nav-link" data-tab="horas-estandar">
+                        <i class="bi bi-clock"></i>
+                        <span>Permisos</span>
+                    </button>
+                    <button class="nav-link" data-tab="papelera">
+                        <i class="bi bi-trash"></i>
+                        <span>Modulos</span>
+                    </button>
+                    <button class="nav-link" data-tab="papelera">
+                        <i class="bi bi-trash"></i>
+                        <span>Acciones</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
