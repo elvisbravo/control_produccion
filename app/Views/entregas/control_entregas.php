@@ -81,31 +81,34 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label for="input1" class="form-label">Fecha y Hora</label>
-                            <input type="datetime-local" class="form-control" id="fecha_hora" value="<?= date('Y-m-d H:i:s') ?>">
+                            <input type="datetime-local" class="form-control" id="fecha_hora" value="<?= date('Y-m-d H:i:s') ?>" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input2" class="form-label">Auxiliar</label>
-                            <select id="input7" class="form-select">
-                                <option></option>
+                            <select id="input7" class="form-select" required>
+                                <option value="">Seleccione un Auxiliar</option>
+                                <?php foreach ($usuarios as $user) : ?>
+                                    <option value="<?= $user['id'] ?>"><?= $user['nombres'] . ' ' . $user['apellidos'] ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-12">
                             <label for="input3" class="form-label">Tipo de Tarea</label>
-                            <select id="input7" class="form-select">
+                            <select id="input7" class="form-select" required>
                                 <option></option>
                             </select>
                         </div>
                         <div class="col-md-12">
                             <label for="input4" class="form-label">Título de Entrega</label>
-                            <input type="text" class="form-control" id="input4" placeholder="titulo">
+                            <input type="text" class="form-control" id="input4" placeholder="titulo" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input5" class="form-label">Cliente</label>
-                            <input type="text" class="form-control" id="input5" placeholder="Seleccione el cliente">
+                            <input type="text" class="form-control" id="input5" placeholder="Seleccione el cliente" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input6" class="form-label">Tiempo Estimado (HH:MM)</label>
-                            <input type="time" class="form-control" id="input6">
+                            <input type="time" class="form-control" id="input6" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input7" class="form-label">Estado</label>
@@ -118,7 +121,7 @@
 
                         <div class="col-md-12">
                             <label for="input6" class="form-label">Fecha y Hora de Entrega Calculada</label>
-                            <input type="datetime-local" class="form-control" id="input6">
+                            <input type="datetime-local" class="form-control" id="input6" required>
                         </div>
 
                         <div class="col-md-12">

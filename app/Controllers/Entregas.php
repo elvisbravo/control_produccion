@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\UsuarioModel;
+
 class Entregas extends BaseController
 {
     public function nuevaEntrega()
@@ -11,7 +13,10 @@ class Entregas extends BaseController
 
     public function controlEntregas()
     {
-        return view('entregas/control_entregas');
+        $usuario = new UsuarioModel();
+        $usuarios = $usuario->where('estado', 1)->findAll();
+
+        return view('entregas/control_entregas', compact('usuarios'));
     }
 
     public function reporteProduccion()
