@@ -81,7 +81,7 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label for="input1" class="form-label">Fecha y Hora</label>
-                            <input type="datetime-local" class="form-control" id="fecha_hora" value="<?= date('Y-m-d H:i:s') ?>" required>
+                            <input type="datetime-local" class="form-control" id="fecha_hora_inicio" value="<?= date('Y-m-d H:i:s') ?>" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input2" class="form-label">Auxiliar</label>
@@ -108,7 +108,7 @@
                         </div>
                         <div class="col-md-12">
                             <label for="input6" class="form-label">Tiempo Estimado (HH:MM)</label>
-                            <input type="time" class="form-control" id="input6" required>
+                            <input type="text" class="form-control" id="estimated-time" pattern="[0-9]{2}:[0-9]{2}" placeholder="05:00" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input7" class="form-label">Estado</label>
