@@ -15,7 +15,7 @@ class Entregas extends BaseController
     public function controlEntregas()
     {
         $usuario = new UsuarioModel();
-        $usuarios = $usuario->where('estado', 1)->findAll();
+        $usuarios = $usuario->where('estado', 1)->where('perfil_id !=', 1)->findAll();
 
         $tarea = new TareaModel();
 
