@@ -21,6 +21,8 @@ $routes->get('/mobile', 'Home::dashboard');
 $routes->get('/nueva-entrega', 'Entregas::nuevaEntrega');
 $routes->get('/control-entregas', 'Entregas::controlEntregas');
 
+$routes->get('/clientes', 'Clientes::index');
+
 $routes->get('/permisos', 'Permisos::index');
 $routes->get('/permisos/cargos', 'Permisos::cargosAll');
 $routes->post('/permisos/cargos', 'Permisos::cargosCreate');

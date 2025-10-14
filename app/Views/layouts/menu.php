@@ -16,6 +16,8 @@
         <ul>
             <li> <a href="/control-entregas"><i class='bx bx-radio-circle'></i>Control de Entregas</a>
             </li>
+            <li> <a href="/clientes"><i class='bx bx-radio-circle'></i>Clientes</a>
+            </li>
             <li> <a href="index3.html"><i class='bx bx-radio-circle'></i>Calendario</a>
             </li>
         </ul>
