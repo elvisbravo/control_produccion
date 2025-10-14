@@ -29,6 +29,7 @@ $routes->get('/reporte-produccion', 'Entregas::reporteProduccion');
 
 $routes->get('/tareas', 'Tareas::index');
 $routes->post('/tareas/guardar', 'Tareas::guardar');
+$routes->post('/tareas-all', 'Tareas::tareasAll');
 
 $routes->get('/categorias-tareas', 'Tareas::categoriasTareas');
 $routes->get('/categorias-tareas/all', 'Tareas::categoriasTareasAll');

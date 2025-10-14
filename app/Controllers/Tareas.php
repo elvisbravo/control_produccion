@@ -54,4 +54,22 @@ class Tareas extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
         }
     }
+
+    public function tareasAll()
+    {
+        $tarea = new TareaModel();
+
+        $categorias = $tarea->select('tareas.id, tareas.categoria_tarea_id, categoria_tarea.nombre_categoria')->join('categoria_tarea', 'categoria_tarea.id = tareas.categoria_tarea_id')->groupBy('categoria_tarea_id')->findAll();
+
+        foreach ($categorias as $key => $value) {
+            $idcategoria = $value['categoria_tarea_id'];
+            $tareas = $tarea->where('categoria_tarea_id', $idcategoria)->findAll();
+            $categorias[$key]['tareas'] = $tareas;
+
+            $total_horas = $tarea->query("SELECT TIME_FORMAT(SEC_TO_TIME(SUM(TIME_TO_SEC(horas_estimadas))), '%H:%i') as total_horas FROM tareas WHERE horas_estimadas IS NOT NULL AND categoria_tarea_id = $idcategoria;")->getRow();
+            $categorias[$key]['total_horas'] = $total_horas->total_horas;
+        }
+
+        return $this->response->setJSON($categorias);
+    }
 }

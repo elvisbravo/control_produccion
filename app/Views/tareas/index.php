@@ -26,67 +26,6 @@
 <!--end row-->
 
 <div class="row" id="tareas">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex align-items-center px-3 py-2">
-                    <div>
-                        <h6 class="mb-0">Proyecto</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered" style="width:100%">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Tarea</th>
-                                <th>Horas</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyUsuarios">
-                            <!-- Aquí se llenarán los datos dinámicamente -->
-
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex align-items-center px-3 py-2">
-                    <div>
-                        <h6 class="mb-0">Proyecto</h6>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered" style="width:100%">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Tarea</th>
-                                <th>Horas</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyUsuarios">
-                            <!-- Aquí se llenarán los datos dinámicamente -->
-
-                        </tbody>
-
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
 
 </div>
 
