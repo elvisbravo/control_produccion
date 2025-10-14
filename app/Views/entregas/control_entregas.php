@@ -24,9 +24,9 @@
     </div>
     <div class="card-body">
 
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <select class="form-control" name="" id="">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <select class="form-select" name="" id="">
                     <option value="">Todos los periodos</option>
                     <option value="">Día</option>
                     <option value="">Semana</option>
@@ -35,11 +35,11 @@
                 </select>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <input type="date" class="form-control">
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <button class="btn btn-primary px-5">Filtrar</button>
             </div>
         </div>

@@ -4,10 +4,15 @@ $(document).ready(function () {
 
 const btnAdd = document.getElementById("btnAdd");
 const formUser = document.getElementById("formUsuario");
+const titleModal = document.getElementById("titleModal");
 
 btnAdd.addEventListener("click", function () {
   const myModal = new bootstrap.Modal(document.getElementById("modalUsuario"));
   myModal.show();
+
+  titleModal.textContent = "Agregar Usuario";
+  formUser.reset();
+  document.getElementById("idUsuario").value = 0;
 });
 
 formUser.addEventListener("submit", function (e) {
@@ -69,6 +74,8 @@ usersAll();
 function editar(id) {
   const myModal = new bootstrap.Modal(document.getElementById("modalUsuario"));
   myModal.show();
+
+  titleModal.textContent = "Editar Usuario";
 
   fetch(`/usuarios/${id}`)
     .then((response) => response.json())
