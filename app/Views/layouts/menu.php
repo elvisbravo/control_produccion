@@ -51,11 +51,9 @@
             <div class="menu-title">Seguridad</div>
         </a>
         <ul>
-            <li> <a href="component-alerts.html"><i class='bx bx-radio-circle'></i>Usuarios</a>
+            <li> <a href="/usuarios"><i class='bx bx-radio-circle'></i>Usuarios</a>
             </li>
             <li> <a href="/permisos"><i class='bx bx-radio-circle'></i>Permisos</a>
-            </li>
-            <li> <a href="component-badges.html"><i class='bx bx-radio-circle'></i>Módulos</a>
             </li>
         </ul>
     </li>
