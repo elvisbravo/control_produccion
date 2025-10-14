@@ -583,8 +583,8 @@
                 <a class="d-flex align-items-center nav-link dropdown-toggle gap-3 dropdown-toggle-nocaret" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <img src="assets/images/avatars/avatar-1.png" class="user-img" alt="user avatar">
                     <div class="user-info">
-                        <p class="user-name mb-0">Pauline Seitz</p>
-                        <p class="designattion mb-0">Web Designer</p>
+                        <p class="user-name mb-0"><?= session()->get('nombre') ?> <?= session()->get('apellidos') ?></p>
+                        <p class="designattion mb-0"><?= session()->get('perfil') ?></p>
                     </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -595,7 +595,7 @@
                     <li>
                         <div class="dropdown-divider mb-0"></div>
                     </li>
-                    <li><a class="dropdown-item d-flex align-items-center" href="javascript:;"><i class="bx bx-log-out-circle"></i><span>Cerrar sesión</span></a>
+                    <li><a class="dropdown-item d-flex align-items-center" href="javascript:;" onclick="logout()"><i class="bx bx-log-out-circle"></i><span>Cerrar sesión</span></a>
                     </li>
                 </ul>
             </div>

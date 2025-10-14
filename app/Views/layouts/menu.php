@@ -14,8 +14,6 @@
             <div class="menu-title">Gestion de Entregas</div>
         </a>
         <ul>
-            <li> <a href="/nueva-entrega"><i class='bx bx-radio-circle'></i>Nueva Entrega</a>
-            </li>
             <li> <a href="/control-entregas"><i class='bx bx-radio-circle'></i>Control de Entregas</a>
             </li>
             <li> <a href="index3.html"><i class='bx bx-radio-circle'></i>Calendario</a>
@@ -40,8 +38,6 @@
             <div class="menu-title">Configuración</div>
         </a>
         <ul>
-            <li> <a href="ecommerce-products.html"><i class='bx bx-radio-circle'></i>Configuración General</a>
-            </li>
             <li> <a href="ecommerce-products-details.html"><i class='bx bx-radio-circle'></i>Hora Estándar</a>
             </li>
             <li> <a href="ecommerce-add-new-products.html"><i class='bx bx-radio-circle'></i>Papelera</a>
@@ -50,14 +46,14 @@
     </li>
     <li>
         <a class="has-arrow" href="javascript:;">
-            <div class="parent-icon"><i class='bx bx-bookmark-heart'></i>
+            <div class="parent-icon"><i class='bx bx-lock'></i>
             </div>
             <div class="menu-title">Seguridad</div>
         </a>
         <ul>
             <li> <a href="component-alerts.html"><i class='bx bx-radio-circle'></i>Usuarios</a>
             </li>
-            <li> <a href="component-accordions.html"><i class='bx bx-radio-circle'></i>Permisos</a>
+            <li> <a href="/permisos"><i class='bx bx-radio-circle'></i>Permisos</a>
             </li>
             <li> <a href="component-badges.html"><i class='bx bx-radio-circle'></i>Módulos</a>
             </li>

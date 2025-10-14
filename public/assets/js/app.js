@@ -1,3 +1,22 @@
+const base_url = document.getElementById('urlBase').value;
+
+function logout() {
+	fetch('/auth/logout', {
+		method: 'GET'
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.status === 'success') {
+			window.location.href = '/';
+		} else {
+			alert('Error al cerrar sesión');
+		}
+	})
+	.catch(error => {
+		console.error('Error:', error);
+	});
+}
+
 $(function() {
 	"use strict";
 	new PerfectScrollbar(".app-container"),

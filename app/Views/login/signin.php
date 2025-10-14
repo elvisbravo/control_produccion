@@ -46,12 +46,12 @@
 										<form class="row g-3" id="formSignin">
 											<div class="col-12">
 												<label for="inputEmailAddress" class="form-label">Correo electrónico</label>
-												<input type="email" class="form-control" id="inputEmailAddress" placeholder="jhon@example.com">
+												<input type="email" class="form-control" id="correo" name="correo" placeholder="Introduce el correo electrónico">
 											</div>
 											<div class="col-12">
 												<label for="inputChoosePassword" class="form-label">Contraseña</label>
 												<div class="input-group" id="show_hide_password">
-													<input type="password" class="form-control border-end-0" id="password" placeholder="Introduce la contraseña"> <a href="javascript:;" class="input-group-text bg-transparent"><i class='bx bx-hide'></i></a>
+													<input type="password" class="form-control border-end-0" id="password" name="password" placeholder="Introduce la contraseña"> <a href="javascript:;" class="input-group-text bg-transparent"><i class='bx bx-hide'></i></a>
 												</div>
 											</div>
 										

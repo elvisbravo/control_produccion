@@ -12,3 +12,26 @@ $(document).ready(function () {
         }
     });
 });
+
+const formSignin = document.getElementById('formSignin');
+
+formSignin.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const formData = new FormData(formSignin);
+
+    fetch('/auth/login', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.href = '/home';
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
