@@ -72,4 +72,12 @@ class Tareas extends BaseController
 
         return $this->response->setJSON($categorias);
     }
+
+    public function getTareaHoras($id)
+    {
+        $tarea = new TareaModel();
+        $data = $tarea->find($id);
+
+        return $this->response->setJSON($data);
+    }
 }

@@ -93,8 +93,8 @@
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <label for="input3" class="form-label">Tipo de Tarea</label>
-                            <select id="input7" class="form-select" required>
+                            <label for="tipo_tarea" class="form-label">Tipo de Tarea</label>
+                            <select id="tipo_tarea" name="tipo_tarea" class="form-select" required>
                                 <option value="">Seleccione una categoría</option>
 
                                 <?php foreach ($categorias as $category) { ?>

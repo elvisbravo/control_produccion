@@ -19,6 +19,7 @@ const peruHolidays = [
 
 const btnAdd = document.getElementById("btnAdd");
 const formEntrega = document.getElementById("formEntrega");
+const tipo_tarea = document.getElementById("tipo_tarea");
 
 btnAdd.addEventListener("click", function () {
   const myModal = new bootstrap.Modal(document.getElementById("modalEntrega"));
@@ -193,3 +194,23 @@ function calculateWorkingHours(startDateTime, duration) {
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
+
+tipo_tarea.addEventListener("change", function () {
+  const selectedValue = this.value;
+
+  fetch("/tarea-horas/" + selectedValue)
+    .then((response) => response.json())
+    .then((data) => {
+      document.getElementById("estimated-time").value = data.horas_estimadas;
+      const startDateTime = document.getElementById("fecha_hora_inicio").value;
+
+      const calculatedDateTime = calculateWorkingHours(
+        startDateTime,
+        data.horas_estimadas
+      );
+      document.getElementById("input6").value = calculatedDateTime;
+    })
+    .catch((error) => {
+      console.error("Error fetching estimated time:", error);
+    });
+});
