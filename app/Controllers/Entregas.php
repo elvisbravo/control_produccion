@@ -13,4 +13,9 @@ class Entregas extends BaseController
     {
         return view('entregas/control_entregas');
     }
+
+    public function reporteProduccion()
+    {
+        return view('entregas/reporte_produccion');
+    }
 }
