@@ -75,7 +75,7 @@ function viewTareas(data) {
             <div class="card-header">
                 <div class="d-flex align-items-center px-3 py-2">
                     <div>
-                        <h6 class="mb-0">${tarea.nombre_categoria} - ${tarea.total_horas}</h6>
+                        <h6 class="mb-0">${tarea.nombre_categoria} (${tarea.total_horas})</h6>
                     </div>
                 </div>
             </div>
