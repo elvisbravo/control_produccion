@@ -59,7 +59,7 @@ class Tareas extends BaseController
     {
         $tarea = new TareaModel();
 
-        $categorias = $tarea->select('tareas.id, tareas.categoria_tarea_id, categoria_tarea.nombre_categoria')->join('categoria_tarea', 'categoria_tarea.id = tareas.categoria_tarea_id')->groupBy('categoria_tarea_id')->findAll();
+        $categorias = $tarea->select('tareas.categoria_tarea_id, categoria_tarea.nombre_categoria')->join('categoria_tarea', 'categoria_tarea.id = tareas.categoria_tarea_id')->groupBy('categoria_tarea_id')->groupBy('categoria_tarea.nombre_categoria')->findAll();
 
         foreach ($categorias as $key => $value) {
             $idcategoria = $value['categoria_tarea_id'];
