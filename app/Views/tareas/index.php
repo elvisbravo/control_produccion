@@ -97,13 +97,13 @@
                 <h5 class="modal-title">Agregar Tarea</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="formUsuario">
-                <input type="hidden" id="idUsuario" name="idUsuario" value="0">
+            <form id="formTarea">
+                <input type="hidden" id="idTarea" name="idTarea" value="0">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Categoría</label>
-                            <select id="cargo" name="cargo" class="form-select">
+                            <label for="categoria" class="form-label">Categoría</label>
+                            <select id="categoria" name="categoria" class="form-select">
                                 <option value="" selected>Seleccione la categoría</option>
                                 <?php foreach ($categorias as $categoria): ?>
                                     <option value="<?= $categoria['id'] ?>"><?= $categoria['nombre_categoria'] ?></option>
@@ -111,12 +111,12 @@
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Nombre de la Tarea</label>
+                            <label for="name_tarea" class="form-label">Nombre de la Tarea</label>
                             <input type="text" class="form-control" name="name_tarea" id="name_tarea" placeholder="Ingrese el nombre de la tarea">
                         </div>
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Horas Estimadas (HH:MM)</label>
-                            <input type="text" class="form-control" id="task-hours" pattern="[0-9]{2}:[0-9]{2}" placeholder="05:00" required="">
+                            <label for="horas_estimadas" class="form-label">Horas Estimadas (HH:MM)</label>
+                            <input type="text" class="form-control" name="horas_estimadas" id="horas_estimadas" pattern="[0-9]{2}:[0-9]{2}" placeholder="05:00" required="">
                         </div>
 
                     </div>

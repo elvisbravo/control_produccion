@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\CategoriaTareaModel;
+use App\Models\TareaModel;
 
 class Tareas extends BaseController
 {
@@ -25,5 +26,32 @@ class Tareas extends BaseController
         $data = $categoria->where('estado', 1)->findAll();
 
         return $this->response->setJSON($data);
+    }
+
+    public function guardar()
+    {
+        try {
+            $tarea = new TareaModel();
+            $idTarea = $this->request->getPost('idTarea');
+            $data = [
+                'categoria_tarea_id' => $this->request->getPost('categoria'),
+                'nombre_tarea' => $this->request->getPost('name_tarea'),
+                'horas_estimadas' => $this->request->getPost('horas_estimadas'),
+                'estado' => 1
+            ];
+            if ($idTarea != 0) {
+                // Actualizar
+                $tarea->update($idTarea, $data);
+
+                return $this->response->setJSON(['status' => 'success', 'message' => 'Tarea actualizada correctamente']);
+            } else {
+                // Crear
+                $tarea->insert($data);
+
+                return $this->response->setJSON(['status' => 'success', 'message' => 'Tarea creada correctamente']);
+            }
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+        }
     }
 }
