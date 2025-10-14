@@ -26,3 +26,7 @@ $routes->get('/permisos/cargos/(:num)', 'Permisos::permisosShow/$1');
 $routes->post('/permisos/guardar', 'Permisos::guardar');
 
 $routes->get('/reporte-produccion', 'Entregas::reporteProduccion');
+
+$routes->get('/tareas', 'Tareas::index');
+$routes->get('/categorias-tareas', 'Tareas::categoriasTareas');
+$routes->get('/categorias-tareas/all', 'Tareas::categoriasTareasAll');

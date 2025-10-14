@@ -38,7 +38,9 @@
             <div class="menu-title">Configuración</div>
         </a>
         <ul>
-            <li> <a href="ecommerce-products-details.html"><i class='bx bx-radio-circle'></i>Hora Estándar</a>
+            <li> <a href="/tareas"><i class='bx bx-radio-circle'></i>Tareas</a>
+            </li>
+            <li> <a href="/categorias-tareas"><i class='bx bx-radio-circle'></i>Categoría de Tareas</a>
             </li>
             <li> <a href="ecommerce-add-new-products.html"><i class='bx bx-radio-circle'></i>Papelera</a>
             </li>
