@@ -47,7 +47,7 @@
 <!--end row-->
 
 <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Agregar Usuario</h5>
@@ -58,31 +58,31 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Nombre</label>
+                            <label for="nombre" class="form-label">Nombre</label>
                             <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Nombre del usuario">
                         </div>
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Apellidos</label>
+                            <label for="apellidos" class="form-label">Apellidos</label>
                             <input type="text" class="form-control" name="apellidos" id="apellidos" placeholder="Apellidos del usuario">
                         </div>
                         <div class="col-md-12">
-                            <label for="input2" class="form-label">Cargo</label>
+                            <label for="cargo" class="form-label">Cargo</label>
                             <select id="cargo" name="cargo" class="form-select">
                                 <option value="" selected>Seleccione el cargo</option>
-                                <?php foreach($perfiles as $perfil): ?>
+                                <?php foreach ($perfiles as $perfil): ?>
                                     <option value="<?= $perfil['id'] ?>"><?= $perfil['nombre_perfil'] ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Correo</label>
+                            <label for="correo" class="form-label">Correo</label>
                             <input type="email" class="form-control" id="correo" name="correo" placeholder="Correo del usuario">
                         </div>
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Contraseña</label>
+                            <label for="password" class="form-label">Contraseña</label>
                             <input type="text" class="form-control" id="password" name="password" placeholder="Contraseña del usuario">
                         </div>
-                        
+
                     </div>
                 </div>
                 <div class="modal-footer">

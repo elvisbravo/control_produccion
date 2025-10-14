@@ -12,6 +12,8 @@ $routes->get('/auth/logout', 'Auth::logout');
 $routes->get('/usuarios', 'Usuarios::index');
 $routes->post('/usuarios/guardar', 'Usuarios::guardar');
 $routes->get('/usuarios/all', 'Usuarios::showAll');
+$routes->get('/usuarios/(:num)', 'Usuarios::getUsuario/$1');
+$routes->get('/usuarios/eliminar/(:num)', 'Usuarios::deleteUsuario/$1');
 
 $routes->get('/home', 'Home::index');
 $routes->get('/mobile', 'Home::dashboard');
