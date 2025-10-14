@@ -8,7 +8,10 @@ class Tareas extends BaseController
 {
     public function index()
     {
-        return view('tareas/index');
+        $categoria = new CategoriaTareaModel();
+        $categorias = $categoria->where('estado', 1)->findAll();
+
+        return view('tareas/index', compact('categorias'));
     }
 
     public function categoriasTareas()

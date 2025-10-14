@@ -13,41 +13,88 @@
 <!--end breadcrumb-->
 <div class="card">
     <div class="card-header">
-        <div class="d-flex align-items-center">
+        <div class="d-flex align-items-center px-3 py-2">
             <div>
-                <h6 class="mb-0">Lista de Tareas</h6>
+                <h6 class="mb-0">Gestión de Horas Estándar por Tarea</h6>
             </div>
-        </div>
-    </div>
-    <div class="card-body">
-
-        <div class="table-responsive">
-            <table id="example" class="table table-striped table-bordered" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Nombre</th>
-                        <th>Cargo</th>
-                        <th>Correo</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyUsuarios">
-                    <!-- Aquí se llenarán los datos dinámicamente -->
-
-                </tbody>
-
-            </table>
+            <div class="ms-auto">
+                <button type="button" class="btn btn-sm btn-outline-success" id="btnAdd">Nueva Tarea</button>
+            </div>
         </div>
     </div>
 </div>
 <!--end row-->
 
-<div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
+<div class="row" id="tareas">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center px-3 py-2">
+                    <div>
+                        <h6 class="mb-0">Proyecto</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Tarea</th>
+                                <th>Horas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyUsuarios">
+                            <!-- Aquí se llenarán los datos dinámicamente -->
+
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center px-3 py-2">
+                    <div>
+                        <h6 class="mb-0">Proyecto</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Tarea</th>
+                                <th>Horas</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyUsuarios">
+                            <!-- Aquí se llenarán los datos dinámicamente -->
+
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="modalTarea" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Agregar Usuario</h5>
+                <h5 class="modal-title">Agregar Tarea</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="formUsuario">
@@ -55,29 +102,21 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Nombre del usuario">
-                        </div>
-                        <div class="col-md-12">
-                            <label for="input1" class="form-label">Apellidos</label>
-                            <input type="text" class="form-control" name="apellidos" id="apellidos" placeholder="Apellidos del usuario">
-                        </div>
-                        <div class="col-md-12">
-                            <label for="input2" class="form-label">Cargo</label>
+                            <label for="input1" class="form-label">Categoría</label>
                             <select id="cargo" name="cargo" class="form-select">
-                                <option value="" selected>Seleccione el cargo</option>
-                                <?php foreach ($perfiles as $perfil): ?>
-                                    <option value="<?= $perfil['id'] ?>"><?= $perfil['nombre_perfil'] ?></option>
+                                <option value="" selected>Seleccione la categoría</option>
+                                <?php foreach ($categorias as $categoria): ?>
+                                    <option value="<?= $categoria['id'] ?>"><?= $categoria['nombre_categoria'] ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Correo</label>
-                            <input type="email" class="form-control" id="correo" name="correo" placeholder="Correo del usuario">
+                            <label for="input1" class="form-label">Nombre de la Tarea</label>
+                            <input type="text" class="form-control" name="name_tarea" id="name_tarea" placeholder="Ingrese el nombre de la tarea">
                         </div>
                         <div class="col-md-12">
-                            <label for="input1" class="form-label">Contraseña</label>
-                            <input type="text" class="form-control" id="password" name="password" placeholder="Contraseña del usuario">
+                            <label for="input1" class="form-label">Horas Estimadas (HH:MM)</label>
+                            <input type="text" class="form-control" id="task-hours" pattern="[0-9]{2}:[0-9]{2}" placeholder="05:00" required="">
                         </div>
 
                     </div>
@@ -98,6 +137,6 @@
 <script src="assets/plugins/datatable/js/jquery.dataTables.min.js"></script>
 <script src="assets/plugins/datatable/js/dataTables.bootstrap5.min.js"></script>
 
-<script src="js/usuarios/user.js"></script>
+<script src="js/tareas/index.js"></script>
 
 <?= $this->endSection() ?>
