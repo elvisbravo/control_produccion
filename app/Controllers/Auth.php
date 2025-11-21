@@ -33,25 +33,43 @@ class Auth extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'Usuario y contraseña son obligatorios.']);
         }
 
-        $user = $usuario->select('usuarios.*, perfiles.id as idperfil, perfiles.nombre_perfil')->join('perfiles', 'perfiles.id = usuarios.perfil_id')->where('usuarios.correo', $correo)->where('usuarios.estado', 1)->first();
+        $user = $usuario->select('usuarios.*, perfiles.id as idperfil, perfiles.nombre_perfil')
+            ->join('perfiles', 'perfiles.id = usuarios.perfil_id')
+            ->where('usuarios.correo', $correo)
+            ->where('usuarios.estado', 1)
+            ->first();
 
         if ($user) {
-            $session = session();
-            $session->set([
-                'id' => $user['id'],
-                'correo' => $user['correo'],
-                'nombre' => $user['nombres'],
-                'apellidos' => $user['apellidos'],
-                'perfil' => $user['nombre_perfil'],
-                'perfil_id' => $user['perfil_id'],
-                'logged_in' => true
-            ]);
+            // Verificar contraseña (soporta tanto hash como texto plano para compatibilidad)
+            $passwordValida = false;
 
-            return $this->response->setJSON(['status' => 'success', 'message' => 'Inicio de sesión exitoso.']);
-        } else {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Credenciales inválidas.']);
+            if (password_get_info($user['password'])['algo'] !== null) {
+                // La contraseña está hasheada
+                $passwordValida = password_verify($password, $user['password']);
+            } else {
+                // Contraseña en texto plano (para compatibilidad con datos antiguos)
+                $passwordValida = ($password === $user['password']);
+            }
+
+            if ($passwordValida) {
+                $session = session();
+                $session->set([
+                    'id' => $user['id'],
+                    'correo' => $user['correo'],
+                    'nombre' => $user['nombres'],
+                    'apellidos' => $user['apellidos'],
+                    'perfil' => $user['nombre_perfil'],
+                    'perfil_id' => $user['perfil_id'],
+                    'logged_in' => true
+                ]);
+
+                return $this->response->setJSON(['status' => 'success', 'message' => 'Inicio de sesión exitoso.']);
+            }
         }
+
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Credenciales inválidas.']);
     }
+
 
     public function logout()
     {

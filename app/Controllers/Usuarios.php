@@ -23,13 +23,18 @@ class Usuarios extends BaseController
             $data = $this->request->getPost();
 
             // Validar datos
-            if (empty($data['nombre']) || empty($data['apellidos']) || empty($data['correo']) || empty($data['password']) || empty($data['cargo'])) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Todos los campos son obligatorios.']);
+            if (empty($data['nombre']) || empty($data['apellidos']) || empty($data['correo']) || empty($data['cargo'])) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Todos los campos obligatorios deben ser completados.']);
             }
 
             $usuarioModel = new \App\Models\UsuarioModel();
 
             if ($data['idUsuario'] == 0) {
+                // Validar contraseña para nuevo usuario
+                if (empty($data['password'])) {
+                    return $this->response->setJSON(['status' => 'error', 'message' => 'La contraseña es obligatoria para nuevos usuarios.']);
+                }
+
                 // Verificar si el correo ya existe
                 $existingUser = $usuarioModel->where('correo', $data['correo'])->first();
                 if ($existingUser) {
@@ -37,24 +42,38 @@ class Usuarios extends BaseController
                 }
 
                 // Nuevo usuario
-                $usuarioModel->insert([
+                $insertData = [
                     'nombres' => $data['nombre'],
                     'apellidos' => $data['apellidos'],
                     'correo' => $data['correo'],
-                    'password' => $data['password'],
+                    'password' => password_hash($data['password'], PASSWORD_DEFAULT),
                     'perfil_id' => $data['cargo'],
-                    'estado' => 1 // Activo por defecto
-                ]);
+                    'telefono' => $data['telefono'] ?? '',
+                    'direccion' => $data['direccion'] ?? '',
+                    'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null,
+                    'estado' => 1
+                ];
+
+                $usuarioModel->insert($insertData);
                 return $this->response->setJSON(['status' => 'success', 'message' => 'Usuario creado exitosamente.']);
             } else {
                 // Actualizar usuario existente
-                $usuarioModel->update($data['idUsuario'], [
+                $updateData = [
                     'nombres' => $data['nombre'],
                     'apellidos' => $data['apellidos'],
                     'correo' => $data['correo'],
-                    'password' => $data['password'],
-                    'perfil_id' => $data['cargo']
-                ]);
+                    'perfil_id' => $data['cargo'],
+                    'telefono' => $data['telefono'] ?? '',
+                    'direccion' => $data['direccion'] ?? '',
+                    'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null
+                ];
+
+                // Solo actualizar contraseña si se proporcionó una nueva
+                if (!empty($data['password'])) {
+                    $updateData['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+                }
+
+                $usuarioModel->update($data['idUsuario'], $updateData);
                 return $this->response->setJSON(['status' => 'success', 'message' => 'Usuario actualizado exitosamente.']);
             }
         } catch (\Exception $e) {
