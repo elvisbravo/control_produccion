@@ -2,124 +2,156 @@
 
 namespace App\Controllers;
 
-use App\Models\PerfilModel;
+use App\Models\PersonaModel;
+use App\Models\UsuarioModel;
+use CodeIgniter\RESTful\ResourceController;
 
-class Usuarios extends BaseController
+class Usuarios extends ResourceController
 {
-    public function index()
-    {
-        $perfil = new PerfilModel();
-        $perfiles = $perfil->where('estado', 1)->findAll();
-        return view('usuarios/index', compact('perfiles'));
-    }
+    protected $format = 'json';
 
-    public function guardar()
+    public function getUser($id)
     {
         try {
-            if (!$this->request->is('post')) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Método no permitido']);
+            $user = new UsuarioModel();
+
+            $datos = $user->query("SELECT usuarios.id, usuarios.usuario, usuarios.clave, usuarios.rol_id, personas.\"tipoDocumento_id\", personas.nombres, personas.apellidos, personas.celular, personas.direccion, personas.fecha_nacimiento, personas.numero_documento, roles.nombre as rol FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona_id INNER JOIN roles ON roles.id = usuarios.rol_id WHERE usuarios.id = $id")->getRow();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Usuario obtenido correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Exception $e) {
+            return $this->failServerError('Error interno del servidor: ' . $e->getMessage());
+        }
+    }
+
+    public function getUsers()
+    {
+        try {
+            $user = new UsuarioModel();
+
+            $datos = $user->query("SELECT usuarios.id, usuarios.usuario, personas.nombres, personas.apellidos, personas.celular, personas.direccion, roles.nombre as rol FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona_id INNER JOIN roles ON roles.id = usuarios.rol_id WHERE usuarios.estado = true AND usuarios.id != 1")->getResultArray();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Usuarios obtenidos correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function create()
+    {
+        $user = new UsuarioModel();
+        $persona = new PersonaModel();
+
+        $persona->db->transStart();
+
+        try {
+            $data = json_decode($this->request->getBody(true));
+
+            $id = $data->usuarioId;
+            $correo = $data->correo;
+            $numeroDocumento = $data->numeroDocumento;
+
+            $verificarEmail = $user->where('usuario', $correo)->first();
+
+            if ($verificarEmail) {
+                return $this->failValidationErrors('El Correo esta registrado');
             }
 
-            $data = $this->request->getPost();
+            $datos_persona = array(
+                "nombres" => $data->nombres,
+                "apellidos" => $data->apellidos,
+                "tipoDocumento_id" => $data->tipoDocumento,
+                "numero_documento" => $numeroDocumento,
+                "email" => $correo,
+                "celular" => $data->celular,
+                "direccion" => $data->direccion,
+                "fecha_nacimiento" => $data->fechaNacimiento,
+                "estado" => true
+            );
 
-            // Validar datos
-            if (empty($data['nombre']) || empty($data['apellidos']) || empty($data['correo']) || empty($data['cargo'])) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Todos los campos obligatorios deben ser completados.']);
-            }
+            if ($id == 0) {
+                $persona->insert($datos_persona);
+                $idPersona = $persona->getInsertID();
 
-            $usuarioModel = new \App\Models\UsuarioModel();
+                $datos_user = array(
+                    "usuario" => $correo,
+                    "clave" => $data->password,
+                    "persona_id" => $idPersona,
+                    "rol_id" => $data->rol_id,
+                    "estado" => true
+                );
 
-            if ($data['idUsuario'] == 0) {
-                // Validar contraseña para nuevo usuario
-                if (empty($data['password'])) {
-                    return $this->response->setJSON(['status' => 'error', 'message' => 'La contraseña es obligatoria para nuevos usuarios.']);
+                $user->insert($datos_user);
+
+                $persona->db->transComplete();
+
+                if ($persona->db->transStatus() === false) {
+                    throw new \Exception("Error al realizar la operación.");
                 }
 
-                // Verificar si el correo ya existe
-                $existingUser = $usuarioModel->where('correo', $data['correo'])->first();
-                if ($existingUser) {
-                    return $this->response->setJSON(['status' => 'error', 'message' => 'El correo ya está en uso.']);
-                }
-
-                // Nuevo usuario
-                $insertData = [
-                    'nombres' => $data['nombre'],
-                    'apellidos' => $data['apellidos'],
-                    'correo' => $data['correo'],
-                    'password' => password_hash($data['password'], PASSWORD_DEFAULT),
-                    'perfil_id' => $data['cargo'],
-                    'telefono' => $data['telefono'] ?? '',
-                    'direccion' => $data['direccion'] ?? '',
-                    'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null,
-                    'estado' => 1
-                ];
-
-                $usuarioModel->insert($insertData);
-                return $this->response->setJSON(['status' => 'success', 'message' => 'Usuario creado exitosamente.']);
+                return $this->respondCreated([
+                    'status' => 201,
+                    'message' => 'Usuario creado correctamente',
+                    'result' => null
+                ]);
             } else {
-                // Actualizar usuario existente
-                $updateData = [
-                    'nombres' => $data['nombre'],
-                    'apellidos' => $data['apellidos'],
-                    'correo' => $data['correo'],
-                    'perfil_id' => $data['cargo'],
-                    'telefono' => $data['telefono'] ?? '',
-                    'direccion' => $data['direccion'] ?? '',
-                    'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null
-                ];
+                $persona->update($id, $datos_persona);
 
-                // Solo actualizar contraseña si se proporcionó una nueva
-                if (!empty($data['password'])) {
-                    $updateData['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+                $usuario = $user->where('persona_id', $id)->first();
+
+                $idusuario = $usuario['id'];
+
+                $datos_user = array(
+                    "usuario" => $correo,
+                    "clave" => $data->password,
+                    "rol_id" => $data->rol_id,
+                    "estado" => true
+                );
+
+                $user->update($idusuario, $datos_user);
+
+                $persona->db->transComplete();
+
+                if ($persona->db->transStatus() === false) {
+                    throw new \Exception("Error al realizar la operación.");
                 }
 
-                $usuarioModel->update($data['idUsuario'], $updateData);
-                return $this->response->setJSON(['status' => 'success', 'message' => 'Usuario actualizado exitosamente.']);
+                return $this->respond([
+                    'status' => 200,
+                    'message' => 'Usuario actualizado correctamente',
+                    'result' => null
+                ]);
             }
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Error al guardar el usuario: ' . $e->getMessage()]);
+        } catch (\Throwable $th) {
+            $persona->db->transRollback();
+
+            return $this->failServerError('Error interno del servidor');
         }
     }
 
-    public function showAll()
+    public function update($id = null)
     {
-        $usuarioModel = new \App\Models\UsuarioModel();
-        $usuarios = $usuarioModel->select('usuarios.*, perfiles.nombre_perfil')
-            ->join('perfiles', 'perfiles.id = usuarios.perfil_id')
-            ->where('usuarios.estado', 1)->where('usuarios.perfil_id !=', 1)
-            ->findAll();
+        $data = [];
 
-        return $this->response->setJSON($usuarios);
+        return $this->respond([
+            'mensaje' => 'Cliente actualizado',
+            'id' => $id,
+            'data' => $data
+        ]);
     }
 
-    public function getUsuario($id)
+    public function delete($id = null)
     {
-        $usuarioModel = new \App\Models\UsuarioModel();
-        $usuario = $usuarioModel->find($id);
-
-        if ($usuario) {
-            return $this->response->setJSON(['status' => 'success', 'data' => $usuario]);
-        } else {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Usuario no encontrado']);
-        }
-    }
-
-    public function deleteUsuario($id)
-    {
-        try {
-            $usuarioModel = new \App\Models\UsuarioModel();
-            $usuario = $usuarioModel->find($id);
-
-            if (!$usuario) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Usuario no encontrado']);
-            }
-
-            // Cambiar estado a 0 (inactivo) en lugar de eliminar
-            $usuarioModel->update($id, ['estado' => 0]);
-
-            return $this->response->setJSON(['status' => 'success', 'message' => 'Usuario eliminado exitosamente']);
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Error al eliminar el usuario: ' . $e->getMessage()]);
-        }
+        return $this->respondDeleted([
+            'mensaje' => 'Cliente eliminado',
+            'id' => $id
+        ]);
     }
 }

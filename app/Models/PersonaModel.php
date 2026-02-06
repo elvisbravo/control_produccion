@@ -13,7 +13,7 @@ class PersonaModel extends Model
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'nombre', 'apellidos', 'tipoDocumentoId', 'numero_documento', 'email', 'celular', 'direccion', 'fecha_nacimiento', 'estado'];
+    protected $allowedFields = ['id', 'nombres', 'apellidos', 'tipoDocumento_id', 'numero_documento', 'email', 'celular', 'direccion', 'fecha_nacimiento', 'estado'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

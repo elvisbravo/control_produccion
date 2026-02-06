@@ -15,6 +15,9 @@ $routes->post('/usuarios/guardar', 'Usuarios::guardar');
 $routes->get('/usuarios/all', 'Usuarios::showAll');
 $routes->get('/usuarios/(:num)', 'Usuarios::getUsuario/$1');
 $routes->get('/usuarios/eliminar/(:num)', 'Usuarios::deleteUsuario/$1');
+$routes->post('/usuario/create', 'Usuarios::create');
+$routes->get('/usuario/get-all', 'Usuarios::getUsers');
+$routes->get('/usuario/get-row/(:num)', 'Usuarios::getUser/$1');
 
 // Permisos
 $routes->get('/permisos', 'Permisos::index');
