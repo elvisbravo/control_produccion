@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -8,35 +8,34 @@ services:
       - "8086:80"
     volumes:
       - .:/var/www/html
-      - ./apache-config:/etc/apache2/sites-available  # monta la config de Apache
+      - ./apache-config:/etc/apache2/sites-available
     depends_on:
       - db
 
   db:
-    image: mysql:8.0
-    container_name: mysql_produccion
+    image: postgres:15
+    container_name: postgres_produccion
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: control_produccion
-      MYSQL_USER: grupoes_produccion
-      MYSQL_PASSWORD: grupoes2025
+      POSTGRES_DB: control_produccion
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: grupoes2023
     ports:
-      - "3307:3306"
+      - "5433:5432"
     volumes:
-      - db_data:/var/lib/mysql
+      - pg_data:/var/lib/postgresql/data
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: ci4_phpmyadmin
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ci4_pgadmin
     restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
     ports:
       - "8085:80"
-    environment:
-      PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: root
     depends_on:
       - db
 
 volumes:
-  db_data:
+  pg_data:
