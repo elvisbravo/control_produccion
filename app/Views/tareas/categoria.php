@@ -8,17 +8,17 @@
 
 <?= $this->section('content') ?>
 <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-    <div class="fs-5 pe-3">Usuarios</div>
+    <div class="fs-5 pe-3">Categoría de Tareas</div>
 </div>
 <!--end breadcrumb-->
 <div class="card">
     <div class="card-header">
         <div class="d-flex align-items-center">
             <div>
-                <h6 class="mb-0">Lista de Usuarios</h6>
+                <h6 class="mb-0">Lista de Categoría de Tareas</h6>
             </div>
             <div class="ms-auto">
-                <button type="button" class="btn btn-sm btn-outline-success" id="btnAdd">Nuevo Usuario</button>
+                <button type="button" class="btn btn-sm btn-outline-success" id="btnAdd">Nueva Categoria</button>
             </div>
         </div>
     </div>
@@ -29,13 +29,11 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Nombre</th>
-                        <th>Cargo</th>
-                        <th>Correo</th>
+                        <th>Nombre Categoria</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="tbodyUsuarios">
+                <tbody id="tbodyCategorias">
                     <!-- Aquí se llenarán los datos dinámicamente -->
 
                 </tbody>
@@ -47,10 +45,10 @@
 <!--end row-->
 
 <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="titleModal">Agregar Usuario</h5>
+                <h5 class="modal-title">Agregar Usuario</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="formUsuario">
@@ -58,28 +56,26 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label for="nombre" class="form-label">Nombre</label>
+                            <label for="input1" class="form-label">Nombre</label>
                             <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Nombre del usuario">
                         </div>
                         <div class="col-md-12">
-                            <label for="apellidos" class="form-label">Apellidos</label>
+                            <label for="input1" class="form-label">Apellidos</label>
                             <input type="text" class="form-control" name="apellidos" id="apellidos" placeholder="Apellidos del usuario">
                         </div>
                         <div class="col-md-12">
-                            <label for="cargo" class="form-label">Cargo</label>
+                            <label for="input2" class="form-label">Cargo</label>
                             <select id="cargo" name="cargo" class="form-select">
                                 <option value="" selected>Seleccione el cargo</option>
-                                <?php foreach ($perfiles as $perfil): ?>
-                                    <option value="<?= $perfil['id'] ?>"><?= $perfil['nombre_perfil'] ?></option>
-                                <?php endforeach; ?>
+
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <label for="correo" class="form-label">Correo</label>
+                            <label for="input1" class="form-label">Correo</label>
                             <input type="email" class="form-control" id="correo" name="correo" placeholder="Correo del usuario">
                         </div>
                         <div class="col-md-12">
-                            <label for="password" class="form-label">Contraseña</label>
+                            <label for="input1" class="form-label">Contraseña</label>
                             <input type="text" class="form-control" id="password" name="password" placeholder="Contraseña del usuario">
                         </div>
 
@@ -101,6 +97,6 @@
 <script src="assets/plugins/datatable/js/jquery.dataTables.min.js"></script>
 <script src="assets/plugins/datatable/js/dataTables.bootstrap5.min.js"></script>
 
-<script src="js/usuarios/user.js"></script>
+<script src="js/tareas/categoria.js"></script>
 
 <?= $this->endSection() ?>

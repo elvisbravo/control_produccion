@@ -24,9 +24,9 @@
     </div>
     <div class="card-body">
 
-        <div class="row mb-3">
-            <div class="col-md-3">
-                <select class="form-control" name="" id="">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <select class="form-select" name="" id="">
                     <option value="">Todos los periodos</option>
                     <option value="">Día</option>
                     <option value="">Semana</option>
@@ -35,11 +35,11 @@
                 </select>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <input type="date" class="form-control">
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <button class="btn btn-primary px-5">Filtrar</button>
             </div>
         </div>
@@ -70,7 +70,7 @@
 <!--end row-->
 
 <div class="modal fade" id="modalEntrega" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Agregar Entrega</h5>
@@ -81,31 +81,44 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label for="input1" class="form-label">Fecha y Hora</label>
-                            <input type="datetime-local" class="form-control" id="fecha_hora" value="<?= date('Y-m-d H:i:s') ?>">
+                            <input type="datetime-local" class="form-control" id="fecha_hora_inicio" value="<?= date('Y-m-d H:i:s') ?>" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input2" class="form-label">Auxiliar</label>
-                            <select id="input7" class="form-select">
-                                <option></option>
+                            <select id="input7" class="form-select" required>
+                                <option value="">Seleccione un Auxiliar</option>
+                                <?php foreach ($usuarios as $user) : ?>
+                                    <option value="<?= $user['id'] ?>"><?= $user['nombres'] . ' ' . $user['apellidos'] ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <label for="input3" class="form-label">Tipo de Tarea</label>
-                            <select id="input7" class="form-select">
-                                <option></option>
+                            <label for="tipo_tarea" class="form-label">Tipo de Tarea</label>
+                            <select id="tipo_tarea" name="tipo_tarea" class="form-select" required>
+                                <option value="">Seleccione una categoría</option>
+
+                                <?php foreach ($categorias as $category) { ?>
+                                    <?php $tareas = $category['tareas'] ?>
+                                    <optgroup label="<?= $category['nombre_categoria'] ?>">
+
+                                        <?php foreach ($tareas as $key => $value) { ?>
+                                            <option value="<?= $value['id'] ?>"><?= $value['nombre_tarea'] ?></option>
+                                        <?php } ?>
+                                    </optgroup>
+                                <?php } ?>
                             </select>
                         </div>
                         <div class="col-md-12">
                             <label for="input4" class="form-label">Título de Entrega</label>
-                            <input type="text" class="form-control" id="input4" placeholder="titulo">
+                            <input type="text" class="form-control" id="input4" placeholder="titulo" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input5" class="form-label">Cliente</label>
-                            <input type="text" class="form-control" id="input5" placeholder="Seleccione el cliente">
+                            <input type="text" class="form-control" id="input5" placeholder="Seleccione el cliente" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input6" class="form-label">Tiempo Estimado (HH:MM)</label>
-                            <input type="time" class="form-control" id="input6">
+                            <input type="text" class="form-control" id="estimated-time" pattern="[0-9]{2}:[0-9]{2}" placeholder="05:00" required>
                         </div>
                         <div class="col-md-12">
                             <label for="input7" class="form-label">Estado</label>
@@ -118,7 +131,7 @@
 
                         <div class="col-md-12">
                             <label for="input6" class="form-label">Fecha y Hora de Entrega Calculada</label>
-                            <input type="datetime-local" class="form-control" id="input6">
+                            <input type="datetime-local" class="form-control" id="input6" required>
                         </div>
 
                         <div class="col-md-12">

@@ -19,6 +19,7 @@
                     <span data-key="t-calendar">Calendar</span>
                 </a>
             </li>
+<<<<<<< HEAD
 
             <li>
                 <a href="apps-chat.html">
@@ -64,6 +65,11 @@
                     <li><a href="apps-blog-list.html" data-key="t-blog-list">Blog List</a></li>
                     <li><a href="apps-blog-detail.html" data-key="t-blog-details">Blog Details</a></li>
                 </ul>
+=======
+            <li> <a href="/clientes"><i class='bx bx-radio-circle'></i>Clientes</a>
+            </li>
+            <li> <a href="index3.html"><i class='bx bx-radio-circle'></i>Calendario</a>
+>>>>>>> ddbbc9b122ffe735b431ff5800a74bd84a41d516
             </li>
         </ul>
     </li>
@@ -90,6 +96,7 @@
             <i data-feather="file-text"></i>
             <span data-key="t-pages">Pages</span>
         </a>
+<<<<<<< HEAD
         <ul class="sub-menu" aria-expanded="false">
             <li><a href="pages-starter.html" data-key="t-starter-page">Starter Page</a></li>
             <li><a href="pages-maintenance.html" data-key="t-maintenance">Maintenance</a></li>
@@ -99,6 +106,15 @@
             <li><a href="pages-pricing.html" data-key="t-pricing">Pricing</a></li>
             <li><a href="pages-404.html" data-key="t-error-404">Error 404</a></li>
             <li><a href="pages-500.html" data-key="t-error-500">Error 500</a></li>
+=======
+        <ul>
+            <li> <a href="/tareas"><i class='bx bx-radio-circle'></i>Tareas</a>
+            </li>
+            <li> <a href="/categorias-tareas"><i class='bx bx-radio-circle'></i>Categoría de Tareas</a>
+            </li>
+            <li> <a href="ecommerce-add-new-products.html"><i class='bx bx-radio-circle'></i>Papelera</a>
+            </li>
+>>>>>>> ddbbc9b122ffe735b431ff5800a74bd84a41d516
         </ul>
     </li>
 
