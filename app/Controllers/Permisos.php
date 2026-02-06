@@ -2,158 +2,122 @@
 
 namespace App\Controllers;
 
-use App\Models\PerfilModel;
-use App\Models\PermisosModel;
-use App\Models\ModulosModel;
+use App\Models\RolModel;
+use CodeIgniter\RESTful\ResourceController;
 
-class Permisos extends BaseController
+class Permisos extends ResourceController
 {
-    public function index()
+    protected $format = 'json';
+
+    public function listaRoles()
     {
-        return view('permisos/index');
-    }
-
-    public function cargosAll()
-    {
-        $cargos = new PerfilModel();
-        $data = $cargos->where('estado', 1)->findAll();
-
-        return $this->response->setJSON($data);
-    }
-
-    public function cargosCreate()
-    {
-        $cargos = new PerfilModel();
-
-        $id = $this->request->getPost('idCargo');
-        $nombre = $this->request->getPost('nameCargo');
-
         try {
-            if ($id == 0) {
-                $cargos->insert([
-                    'nombre_perfil' => $nombre,
-                    'estado' => 1
-                ]);
-
-                return $this->response->setJSON(['status' => 'ok', 'message' => 'Cargo creado con éxito']);
-            } else {
-                $cargos->update($id, [
-                    'nombre_perfil' => $nombre
-                ]);
-
-                return $this->response->setJSON(['status' => 'ok', 'message' => 'Cargo actualizado con éxito']);
-            }
+            $rol = new RolModel();
+            $roles = $rol->where('estado', true)->orderBy('id', 'ASC')->findAll();
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Roles obtenidos correctamente',
+                'result' => $roles
+            ]);
         } catch (\Exception $e) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Error al procesar la solicitud ' . $e->getMessage()]);
+            return $this->failServerError('Error interno del servidor');
         }
     }
 
-    public function permisosShow($idperfil)
+    public function createRol()
     {
-        $permisos = new PermisosModel();
-        $modulos = new ModulosModel();
-        $perfil = new PerfilModel();
+        try {
+            $data = json_decode($this->request->getBody(true));
 
-        $perfil = $perfil->find($idperfil);
-
-        $modulos_padres = $modulos->where('padre', 0)->where('estado', 1)->orderBy('orden', 'asc')->findAll();
-
-        foreach ($modulos_padres as $key => $value) {
-            $hijos = $modulos->where('padre', $value['id'])->where('estado', 1)->orderBy('orden', 'asc')->findAll();
-
-            foreach ($hijos as $keys => $values) {
-
-                $modulo_id = $values['id'];
-
-                $permiso = $permisos->where('modulo_id', $modulo_id)->where('perfil_id', $idperfil)->first();
-
-                $acciones = $permisos->query("SELECT ma.accion_id, a.nombre_accion FROM acciones_modulos ma INNER JOIN acciones a ON a.id = ma.accion_id WHERE ma.modulo_id = $modulo_id AND ma.accion_id != 1")->getResultArray();
-
-                foreach ($acciones as $keyes => $item) {
-                    $peraccion = $permisos->where('modulo_id', $modulo_id)->where('accion_id', $item['accion_id'])->where('perfil_id', $idperfil)->first();
-
-                    if ($peraccion) {
-                        $acciones[$keyes]['permiso'] = 1;
-                    } else {
-                        $acciones[$keyes]['permiso'] = 0;
-                    }
-                }
-
-                $hijos[$keys]['acciones'] = $acciones;
-
-                if ($permiso) {
-                    $hijos[$keys]['permiso'] = 1;
-                } else {
-                    $hijos[$keys]['permiso'] = 0;
-                }
+            if (empty($data->nombre)) {
+                return $this->failValidationErrors('Faltan datos obligatorios');
             }
 
-            $modulos_padres[$key]['hijos'] = $hijos;
-        }
+            $id = $data->rolId;
 
-        return $this->response->setJSON([
-            'modulos' => $modulos_padres,
-            'perfil' => $perfil['nombre_perfil'],
-            'idperfil' => $perfil['id']
+            $rol = new RolModel();
+
+            if ($id == 0) {
+                
+                $rol->insert([
+                    'nombre' => $data->nombre,
+                    'estado' => true
+                ]);
+
+                return $this->respondCreated([
+                    'status' => 201,
+                    'message' => 'Rol creado correctamente',
+                    'result' => null
+                ]);
+            } else {
+                $rol->update($id, [
+                    'nombre' => $data->nombre
+                ]);
+
+                return $this->respond([
+                    'status' => 200,
+                    'message' => 'Rol actualizado correctamente',
+                    'result' => null
+                ]);
+            }
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function deleteRol($id)
+    {
+        try {
+            $rol = new RolModel();
+
+            $rol->update($id, [
+                'estado' => false
+            ]);
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Rol eliminado correctamente',
+                'result' => null
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function show($id = null)
+    {
+        return $this->respond([
+            'id' => $id,
+            'nombre' => 'Cliente ' . $id
         ]);
     }
 
-    public function guardar()
+    public function create()
     {
-        try {
-            /*if (!session()->logged_in) {
-                return redirect()->to(base_url());
-            }*/
+        $data = [];
 
-            if (!$this->request->getPost('permisos')) {
-                return $this->response->setJSON([
-                    'status' => 'error',
-                    'message' => 'Seleccione al menos un módulo'
-                ]);
-            }
+        return $this->respondCreated([
+            'mensaje' => 'Cliente creado',
+            'data' => $data
+        ]);
+    }
 
-            $permisos = new PermisosModel();
+    public function update($id = null)
+    {
+        $data = [];
 
-            $idperfil = $this->request->getPost('perfil_id');
-            $modulos = $this->request->getPost('permisos');
+        return $this->respond([
+            'mensaje' => 'Cliente actualizado',
+            'id' => $id,
+            'data' => $data
+        ]);
+    }
 
-            $consulta = $permisos->where('perfil_id', $idperfil)->findAll();
-
-            if ($consulta) {
-                $permisos->where('perfil_id', $idperfil)->delete();
-            }
-
-            for ($i = 0; $i < count($modulos); $i++) {
-                $datos = array(
-                    'perfil_id' => $idperfil,
-                    'modulo_id' => $modulos[$i],
-                    'accion_id' => 1
-                );
-
-                $permisos->save($datos);
-
-                if ($this->request->getPost('permisosAcciones-' . $modulos[$i])) {
-                    foreach ($this->request->getPost('permisosAcciones-' . $modulos[$i]) as $key => $value) {
-                        $datos = array(
-                            'perfil_id' => $idperfil,
-                            'modulo_id' => $modulos[$i],
-                            'accion_id' => $value
-                        );
-
-                        $permisos->save($datos);
-                    }
-                }
-            }
-
-            return $this->response->setJSON([
-                'status' => 'success',
-                'message' => "Permisos actualizados correctamente"
-            ]);
-        } catch (\Exception $e) {
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ]);
-        }
+    public function delete($id = null)
+    {
+        return $this->respondDeleted([
+            'mensaje' => 'Cliente eliminado',
+            'id' => $id
+        ]);
     }
 }

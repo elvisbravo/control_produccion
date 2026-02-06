@@ -13,9 +13,10 @@ class UsuarioModel extends Model
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'nombres', 'apellidos', 'perfil_id', 'correo', 'password', 'estado'];
+    protected $allowedFields = ['id', 'usuario', 'clave', 'persona_id', 'estado', 'rol_id'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 }
+
