@@ -4,16 +4,16 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class CategoriaTareaModel extends Model
+class TipoTareaModel extends Model
 {
-    protected $table      = 'categoria_tarea';
+    protected $table      = 'tipo_tarea';
     protected $primaryKey = 'id';
 
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'nombre_categoria', 'estado'];
+    protected $allowedFields = ['id', 'tipo', 'estado', 'color'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

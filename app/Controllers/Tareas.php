@@ -2,82 +2,170 @@
 
 namespace App\Controllers;
 
-use App\Models\CategoriaTareaModel;
 use App\Models\TareaModel;
+use App\Models\TipoTareaModel;
+use CodeIgniter\RESTful\ResourceController;
 
-class Tareas extends BaseController
+class Tareas extends ResourceController
 {
-    public function index()
-    {
-        $categoria = new CategoriaTareaModel();
-        $categorias = $categoria->where('estado', 1)->findAll();
+    protected $format = 'json';
 
-        return view('tareas/index', compact('categorias'));
-    }
-
-    public function categoriasTareas()
-    {
-        return view('tareas/categoria');
-    }
-
-    public function categoriasTareasAll()
-    {
-        $categoria = new CategoriaTareaModel();
-        $data = $categoria->where('estado', 1)->findAll();
-
-        return $this->response->setJSON($data);
-    }
-
-    public function guardar()
+    public function getTareas()
     {
         try {
             $tarea = new TareaModel();
-            $idTarea = $this->request->getPost('idTarea');
-            $data = [
-                'categoria_tarea_id' => $this->request->getPost('categoria'),
-                'nombre_tarea' => $this->request->getPost('name_tarea'),
-                'horas_estimadas' => $this->request->getPost('horas_estimadas'),
-                'estado' => 1
-            ];
-            if ($idTarea != 0) {
-                // Actualizar
-                $tarea->update($idTarea, $data);
 
-                return $this->response->setJSON(['status' => 'success', 'message' => 'Tarea actualizada correctamente']);
+            $datos = $tarea->query("SELECT tarea.id, tarea.nombre, tarea.horas_estimadas, tipo_tarea.tipo, tipo_tarea.color FROM tarea INNER JOIN tipo_tarea ON tipo_tarea.id = tarea.tipo_tarea WHERE tarea.estado = true")->getResultArray();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Tareas obtenidas correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function create()
+    {
+        $tarea = new TareaModel();
+
+        try {
+            $data = json_decode($this->request->getBody(true));
+
+            $id = $data->id;
+
+            $datos_tarea = array(
+                "nombre" => $data->nombre,
+                "horas_estimadas" => $data->horasEstimadas,
+                "tipo_tarea" => $data->categoriaId,
+                "estado" => true
+            );
+
+            if ($id == 0) {
+
+                $tarea->insert($datos_tarea);
+                return $this->respondCreated([
+                    'status' => 201,
+                    'message' => 'Tarea creada correctamente',
+                    'result' => null
+                ]);
             } else {
-                // Crear
-                $tarea->insert($data);
-
-                return $this->response->setJSON(['status' => 'success', 'message' => 'Tarea creada correctamente']);
+                $tarea->update($id, $datos_tarea);
+                return $this->respond([
+                    'status' => 200,
+                    'message' => 'Tarea actualizada correctamente',
+                    'result' => null
+                ]);
             }
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
         }
     }
 
-    public function tareasAll()
+    public function update($id = null)
     {
-        $tarea = new TareaModel();
+        $data = [];
 
-        $categorias = $tarea->select('tareas.categoria_tarea_id, MAX(categoria_tarea.nombre_categoria) AS nombre_categoria')->join('categoria_tarea', 'categoria_tarea.id = tareas.categoria_tarea_id')->groupBy('categoria_tarea_id')->findAll();
-
-        foreach ($categorias as $key => $value) {
-            $idcategoria = $value['categoria_tarea_id'];
-            $tareas = $tarea->where('categoria_tarea_id', $idcategoria)->findAll();
-            $categorias[$key]['tareas'] = $tareas;
-
-            $total_horas = $tarea->query("SELECT TIME_FORMAT(SEC_TO_TIME(SUM(TIME_TO_SEC(horas_estimadas))), '%H:%i') as total_horas FROM tareas WHERE horas_estimadas IS NOT NULL AND categoria_tarea_id = $idcategoria;")->getRow();
-            $categorias[$key]['total_horas'] = $total_horas->total_horas;
-        }
-
-        return $this->response->setJSON($categorias);
+        return $this->respond([
+            'mensaje' => 'Cliente actualizado',
+            'id' => $id,
+            'data' => $data
+        ]);
     }
 
-    public function getTareaHoras($id)
+    public function delete($id = null)
     {
-        $tarea = new TareaModel();
-        $data = $tarea->find($id);
+        try {
+            $tarea = new TareaModel();
 
-        return $this->response->setJSON($data);
+            $datos_tarea = array(
+                "estado" => false
+            );
+
+            $tarea->update($id, $datos_tarea);
+
+            return $this->respondDeleted([
+                'status' => 200,
+                'message' => 'Tarea eliminada',
+                'id' => $id
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
+        }
+    }
+
+    public function createType()
+    {
+        try {
+            $data = json_decode($this->request->getBody(true));
+
+            $id = $data->id;
+
+            $tipo = new TipoTareaModel();
+
+            $datos_tipo = array(
+                "tipo" => $data->nombre,
+                "color" => $data->color,
+                "estado" => true
+            );
+
+            if ($id == 0) {
+
+                $tipo->insert($datos_tipo);
+                return $this->respondCreated([
+                    'status' => 201,
+                    'message' => 'Tipo de tarea creado correctamente',
+                    'result' => null
+                ]);
+            } else {
+                $tipo->update($id, $datos_tipo);
+                return $this->respond([
+                    'status' => 200,
+                    'message' => 'Tipo de tarea actualizado correctamente',
+                    'result' => null
+                ]);
+            }
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function getTypes()
+    {
+        try {
+            $tipo = new TipoTareaModel();
+
+            $datos = $tipo->where('estado', true)->findAll();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Tipos de tarea obtenidos correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function deleteType($id = null)
+    {
+        try {
+            $tipo = new TipoTareaModel();
+
+            $datos_tipo = array(
+                "estado" => false
+            );
+
+            $tipo->update($id, $datos_tipo);
+
+            return $this->respondDeleted([
+                'status' => 200,
+                'message' => 'Tipo de tarea eliminado'
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
     }
 }

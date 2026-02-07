@@ -149,9 +149,21 @@ class Usuarios extends ResourceController
 
     public function delete($id = null)
     {
-        return $this->respondDeleted([
-            'mensaje' => 'Cliente eliminado',
-            'id' => $id
-        ]);
+        try {
+            $user = new UsuarioModel();
+
+            $datos_user = array(
+                "estado" => false
+            );
+
+            $user->update($id, $datos_user);
+
+            return $this->respondDeleted([
+                'mensaje' => 'Usuario eliminado',
+                'id' => $id
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
     }
 }

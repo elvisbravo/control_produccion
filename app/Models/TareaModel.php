@@ -6,14 +6,14 @@ use CodeIgniter\Model;
 
 class TareaModel extends Model
 {
-    protected $table      = 'tareas';
+    protected $table      = 'tarea';
     protected $primaryKey = 'id';
 
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'categoria_tarea_id', 'nombre_tarea', 'horas_estimadas', 'estado'];
+    protected $allowedFields = ['id', 'nombre', 'horas_estimadas', 'tipo_tarea', 'estado'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';
