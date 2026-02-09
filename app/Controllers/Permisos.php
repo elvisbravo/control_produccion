@@ -13,7 +13,7 @@ class Permisos extends ResourceController
     {
         try {
             $rol = new RolModel();
-            $roles = $rol->where('estado', true)->orderBy('id', 'ASC')->findAll();
+            $roles = $rol->where('estado', true)->where('id !=', 1)->orderBy('id', 'ASC')->findAll();
             return $this->respond([
                 'status' => 200,
                 'message' => 'Roles obtenidos correctamente',
