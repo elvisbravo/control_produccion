@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\TareaModel;
+use App\Models\TareaRolesModel;
 use App\Models\TipoTareaModel;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -14,8 +15,14 @@ class Tareas extends ResourceController
     {
         try {
             $tarea = new TareaModel();
+            $roles = new TareaRolesModel();
 
             $datos = $tarea->query("SELECT tarea.id, tarea.nombre, tarea.horas_estimadas, tipo_tarea.tipo, tipo_tarea.color FROM tarea INNER JOIN tipo_tarea ON tipo_tarea.id = tarea.tipo_tarea WHERE tarea.estado = true")->getResultArray();
+
+            foreach ($datos as $key => $value) {
+                $roles_tarea = $roles->query("SELECT rol_id, roles.nombre FROM tareas_roles INNER JOIN roles ON roles.id = tareas_roles.rol_id WHERE tareas_roles.tarea_id = " . $value['id'])->getResultArray();
+                $datos[$key]['roles'] = $roles_tarea;
+            }
 
             return $this->respond([
                 'status' => 200,
@@ -30,6 +37,9 @@ class Tareas extends ResourceController
     public function create()
     {
         $tarea = new TareaModel();
+        $tarea_roles = new TareaRolesModel();
+
+        $tarea->db->transStart();
 
         try {
             $data = json_decode($this->request->getBody(true));
@@ -43,9 +53,28 @@ class Tareas extends ResourceController
                 "estado" => true
             );
 
+            $roles = $data->roles;
+
             if ($id == 0) {
 
                 $tarea->insert($datos_tarea);
+
+                $tarea_id = $tarea->insertID();
+
+                for ($i=0; $i < count($roles); $i++) { 
+                    $datos_tarea_roles = array(
+                        "tarea_id" => $tarea_id,
+                        "rol_id" => $roles[$i]
+                    );
+                    $tarea_roles->insert($datos_tarea_roles);
+                }
+
+                $tarea->db->transComplete();
+
+                if ($tarea->db->transStatus() === false) {
+                    throw new \Exception("Error al realizar la operación.");
+                }
+
                 return $this->respondCreated([
                     'status' => 201,
                     'message' => 'Tarea creada correctamente',
@@ -53,6 +82,23 @@ class Tareas extends ResourceController
                 ]);
             } else {
                 $tarea->update($id, $datos_tarea);
+
+                $tarea_roles->delete(['tarea_id' => $id]);
+
+                for ($i=0; $i < count($roles); $i++) { 
+                    $datos_tarea_roles = array(
+                        "tarea_id" => $id,
+                        "rol_id" => $roles[$i]
+                    );
+                    $tarea_roles->insert($datos_tarea_roles);
+                }
+
+                $tarea->db->transComplete();
+
+                if ($tarea->db->transStatus() === false) {
+                    throw new \Exception("Error al realizar la operación.");
+                }
+
                 return $this->respond([
                     'status' => 200,
                     'message' => 'Tarea actualizada correctamente',
@@ -60,6 +106,7 @@ class Tareas extends ResourceController
                 ]);
             }
         } catch (\Throwable $th) {
+            $tarea->db->transRollback();
             return $this->failServerError('Error interno del servidor');
         }
     }
