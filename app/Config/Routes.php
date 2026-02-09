@@ -33,6 +33,11 @@ $routes->get('/instituciones', 'Institucion::getInstituciones');
 $routes->post('/instituciones/guardar', 'Institucion::create');
 $routes->get('/instituciones/eliminar/(:num)', 'Institucion::delete/$1');
 
+// Carreras
+$routes->get('/carreras', 'Carreras::getInstituciones');
+$routes->post('/carreras/guardar', 'Carreras::create');
+$routes->get('/carreras/eliminar/(:num)', 'Carreras::delete/$1');
+
 // Permisos
 $routes->get('/permisos', 'Permisos::index');
 $routes->get('/permisos/lista-roles', 'Permisos::listaRoles');
