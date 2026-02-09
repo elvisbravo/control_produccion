@@ -28,6 +28,11 @@ $routes->get('/tareas/all', 'Tareas::getTareas');
 $routes->get('/tareas/delete-type/(:num)', 'Tareas::deleteType/$1');
 $routes->get('/tareas/delete/(:num)', 'Tareas::delete/$1');
 
+// Instituciones
+$routes->get('/instituciones', 'Institucion::getInstituciones');
+$routes->post('/instituciones/guardar', 'Institucion::create');
+$routes->get('/instituciones/eliminar/(:num)', 'Institucion::delete/$1');
+
 // Permisos
 $routes->get('/permisos', 'Permisos::index');
 $routes->get('/permisos/lista-roles', 'Permisos::listaRoles');
