@@ -3,127 +3,57 @@
 namespace App\Controllers;
 
 use App\Models\FeriadoModel;
+use CodeIgniter\RESTful\ResourceController;
 
-class Feriados extends BaseController
+class Feriados extends ResourceController
 {
-    public function index()
-    {
-        if (!session()->get('logged_in')) {
-            return redirect()->to('/auth/signin');
-        }
+    protected $format = 'json';
 
-        return view('feriados/index');
-    }
-
-    public function guardar()
+    public function getFeriados()
     {
         try {
-            if (!$this->request->is('post')) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Método no permitido']);
-            }
+            $feriado = new FeriadoModel();
 
-            if (!session()->get('logged_in')) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
-            }
+            $datos = $feriado->query("SELECT * FROM feriados WHERE estado = true ORDER BY fecha ASC")->getResultArray();
 
-            $data = $this->request->getPost();
-            $feriadoModel = new FeriadoModel();
-
-            if (empty($data['nombre']) || empty($data['fecha'])) {
-                return $this->response->setJSON([
-                    'status' => 'error',
-                    'message' => 'Nombre y fecha son obligatorios'
-                ]);
-            }
-
-            $feriadoId = $data['feriado_id'] ?? 0;
-
-            $feriadoData = [
-                'nombre' => $data['nombre'],
-                'fecha' => $data['fecha'],
-                'tipo' => $data['tipo'] ?? 'Nacional',
-                'es_laborable' => $data['es_laborable'] ?? 0
-            ];
-
-            if ($feriadoId == 0) {
-                $nuevoId = $feriadoModel->insert($feriadoData);
-
-                if ($nuevoId) {
-                    return $this->response->setJSON([
-                        'status' => 'success',
-                        'message' => 'Feriado creado exitosamente'
-                    ]);
-                }
-            } else {
-                $feriadoModel->update($feriadoId, $feriadoData);
-
-                return $this->response->setJSON([
-                    'status' => 'success',
-                    'message' => 'Feriado actualizado exitosamente'
-                ]);
-            }
-
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'Error al guardar el feriado'
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Feriados obtenidos correctamente',
+                'result' => $datos
             ]);
-        } catch (\Exception $e) {
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage()
-            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
         }
     }
 
-    public function showAll()
+    public function create()
     {
-        if (!session()->get('logged_in')) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
+        $feriado = new FeriadoModel();
+
+        try {
+            //aqui la logica
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
         }
-
-        $feriadoModel = new FeriadoModel();
-        $anio = $this->request->getGet('anio') ?? date('Y');
-
-        $feriados = $feriadoModel->obtenerPorAnio($anio);
-
-        return $this->response->setJSON($feriados);
     }
 
-    public function getFeriado($id)
+    public function update($id = null)
     {
-        if (!session()->get('logged_in')) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
-        }
+        $data = [];
 
-        $feriadoModel = new FeriadoModel();
-        $feriado = $feriadoModel->find($id);
-
-        if ($feriado) {
-            return $this->response->setJSON(['status' => 'success', 'data' => $feriado]);
-        } else {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Feriado no encontrado']);
-        }
+        return $this->respond([
+            'mensaje' => 'Cliente actualizado',
+            'id' => $id,
+            'data' => $data
+        ]);
     }
 
-    public function deleteFeriado($id)
+    public function delete($id = null)
     {
         try {
-            if (!session()->get('logged_in')) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
-            }
-
-            $feriadoModel = new FeriadoModel();
-            $feriado = $feriadoModel->find($id);
-
-            if (!$feriado) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Feriado no encontrado']);
-            }
-
-            $feriadoModel->update($id, ['estado' => 0]);
-
-            return $this->response->setJSON(['status' => 'success', 'message' => 'Feriado eliminado exitosamente']);
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Error: ' . $e->getMessage()]);
+            //aqui la logica
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
         }
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Models\CarreraModel;
-use App\Models\institucionModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class Carreras extends ResourceController

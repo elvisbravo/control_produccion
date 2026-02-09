@@ -38,6 +38,9 @@ $routes->get('/carreras', 'Carreras::getInstituciones');
 $routes->post('/carreras/guardar', 'Carreras::create');
 $routes->get('/carreras/eliminar/(:num)', 'Carreras::delete/$1');
 
+// Feriados
+$routes->get('/feriados', 'Feriados::getFeriados');
+
 // Permisos
 $routes->get('/permisos', 'Permisos::index');
 $routes->get('/permisos/lista-roles', 'Permisos::listaRoles');
