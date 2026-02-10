@@ -46,6 +46,11 @@ $routes->get('/feriados', 'Feriados::getFeriados');
 // Clientes
 $routes->post('/prospectos/crear', 'Clientes::createProspecto');
 
+// Origen
+$routes->get('origen/get-all', 'Origen::getOrigenes');
+$routes->post('origen/save', 'Origen::create');
+$routes->get('origen/delete/(:num)', 'Origen::delete/$1');
+
 // Permisos
 $routes->get('/permisos', 'Permisos::index');
 $routes->get('/permisos/lista-roles', 'Permisos::listaRoles');
