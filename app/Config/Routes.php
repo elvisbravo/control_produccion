@@ -28,6 +28,7 @@ $routes->get('/tareas/all', 'Tareas::getTareas');
 $routes->get('/tareas/delete-type/(:num)', 'Tareas::deleteType/$1');
 $routes->get('/tareas/delete/(:num)', 'Tareas::delete/$1');
 $routes->get('/tareas/get/(:num)', 'Tareas::getTareaRow/$1');
+$routes->get('/tareas/get-by-rol/(:num)', 'Tareas::getTareasByRol/$1');
 
 // Instituciones
 $routes->get('/instituciones', 'Institucion::getInstituciones');
@@ -41,6 +42,9 @@ $routes->get('/carreras/eliminar/(:num)', 'Carreras::delete/$1');
 
 // Feriados
 $routes->get('/feriados', 'Feriados::getFeriados');
+
+// Clientes
+$routes->post('/prospectos/crear', 'Clientes::createProspecto');
 
 // Permisos
 $routes->get('/permisos', 'Permisos::index');

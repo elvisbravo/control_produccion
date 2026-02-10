@@ -2,151 +2,136 @@
 
 namespace App\Controllers;
 
-use App\Models\ClienteModel;
+use App\Models\institucionModel;
+use App\Models\PersonaModel;
+use App\Models\ProspectoPersonaModel;
+use App\Models\ProspectosModel;
+use CodeIgniter\RESTful\ResourceController;
 
-class Clientes extends BaseController
+class Clientes extends ResourceController
 {
-    public function index()
-    {
-        if (!session()->get('logged_in')) {
-            return redirect()->to('/auth/signin');
-        }
+    protected $format = 'json';
 
-        return view('clientes/index');
-    }
-
-    public function guardar()
+    public function getInstituciones()
     {
         try {
-            if (!$this->request->is('post')) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Método no permitido']);
-            }
+            $institucion = new institucionModel();
 
-            if (!session()->get('logged_in')) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
-            }
+            $datos = $institucion->query("SELECT * FROM institucion WHERE estado = true")->getResultArray();
 
-            $data = $this->request->getPost();
-            $clienteModel = new ClienteModel();
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Instituciones obtenidas correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
 
-            // Validar datos
-            if (empty($data['nombres']) || empty($data['apellidos'])) {
-                return $this->response->setJSON([
-                    'status' => 'error',
-                    'message' => 'Nombres y apellidos son obligatorios'
+    public function createProspecto()
+    {
+        $prospecto = new ProspectosModel();
+        $persona = new PersonaModel();
+        $prospecto_persona = new ProspectoPersonaModel();
+
+        try {
+            $data = json_decode($this->request->getBody(true));
+
+            $id = $data->id;
+            if ($id == 0) {
+
+                $nombres = $data->nombres;
+                $apellidos = $data->apellidos;
+                $celular = $data->celular;
+
+                $prospecto->insert([
+                    'fecha_contacto' => date('Y-m-d'),
+                    'origen_id' => $data->origenId ?? 0,
+                    'usuario_venta_id' => (int)$data->usuarioVentaId ?? 0,
+                    'nivel_academico_id' => $data->nivelAcademicoId ?? 0,
+                    'carrera_id' => $data->carreraId ?? 0,
+                    'estado' => true,
+                    'fecha_entrega' => $data->fechaEntrega ?? null,
                 ]);
-            }
 
-            $clienteId = $data['cliente_id'] ?? 0;
+                $id_prospecto = $prospecto->getInsertID();
 
-            $clienteData = [
-                'nombres' => $data['nombres'],
-                'apellidos' => $data['apellidos'],
-                'email' => $data['email'] ?? '',
-                'telefono' => $data['telefono'] ?? '',
-                'empresa' => $data['empresa'] ?? '',
-                'direccion' => $data['direccion'] ?? ''
-            ];
+                for ($i = 0; $i < count($nombres); $i++) {
+                    $datos_persona = array(
+                        "nombre" => $nombres[$i]->nombre,
+                        "apellidos" => $apellidos[$i]->apellidos,
+                        'tipoDocumento_id' => 1,
+                        "celular" => $celular[$i]->celular
+                    );
 
-            if ($clienteId == 0) {
-                // Nuevo cliente
-                $nuevoId = $clienteModel->insert($clienteData);
+                    $persona->insert($datos_persona);
 
-                if ($nuevoId) {
-                    return $this->response->setJSON([
-                        'status' => 'success',
-                        'message' => 'Cliente creado exitosamente',
-                        'cliente_id' => $nuevoId
+                    $id_persona = $persona->getInsertID();
+
+                    $prospecto_persona->insert([
+                        'persona_id' => $id_persona,
+                        'prospecto_id' => $id_prospecto
                     ]);
                 }
-            } else {
-                // Actualizar cliente
-                $clienteModel->update($clienteId, $clienteData);
 
-                return $this->response->setJSON([
-                    'status' => 'success',
-                    'message' => 'Cliente actualizado exitosamente'
+                return $this->respondCreated([
+                    'status' => 201,
+                    'message' => 'Prospecto creado correctamente',
+                    'result' => null
+                ]);
+            } else {
+                $prospecto->update($id, [
+                    'fecha_contacto' => $data->fechaContacto,
+                    'origen_id' => $data->origenId,
+                    'usuario_venta_id' => $data->usuarioVentaId,
+                    'nivel_academico_id' => $data->nivelAcademicoId,
+                    'carrera_id' => $data->carreraId,
+                    'tarea_id' => $data->tareaId,
+                    'fecha_entrega' => $data->fechaEntrega,
+                    'usuario_jefe_valoro' => $data->usuarioJefeValoro
+                ]);
+
+                return $this->respond([
+                    'status' => 200,
+                    'message' => 'Prospecto actualizado correctamente',
+                    'result' => null
                 ]);
             }
-
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'Error al guardar el cliente'
-            ]);
         } catch (\Exception $e) {
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage()
-            ]);
+            return $this->failServerError('Error interno del servidor: ' . $e->getMessage());
         }
     }
 
-    public function showAll()
+    public function update($id = null)
     {
-        if (!session()->get('logged_in')) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
-        }
+        $data = [];
 
-        $clienteModel = new ClienteModel();
-        $clientes = $clienteModel->where('estado', 1)->findAll();
-
-        return $this->response->setJSON($clientes);
+        return $this->respond([
+            'mensaje' => 'Cliente actualizado',
+            'id' => $id,
+            'data' => $data
+        ]);
     }
 
-    public function getCliente($id)
-    {
-        if (!session()->get('logged_in')) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
-        }
-
-        $clienteModel = new ClienteModel();
-        $cliente = $clienteModel->find($id);
-
-        if ($cliente) {
-            return $this->response->setJSON(['status' => 'success', 'data' => $cliente]);
-        } else {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Cliente no encontrado']);
-        }
-    }
-
-    public function deleteCliente($id)
+    public function delete($id = null)
     {
         try {
-            if (!session()->get('logged_in')) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
-            }
+            $institucion = new institucionModel();
 
-            $clienteModel = new ClienteModel();
-            $cliente = $clienteModel->find($id);
+            $datos_institucion = array(
+                "estado" => false
+            );
 
-            if (!$cliente) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Cliente no encontrado']);
-            }
+            $institucion->update($id, $datos_institucion);
 
-            // Soft delete
-            $clienteModel->update($id, ['estado' => 0]);
-
-            return $this->response->setJSON(['status' => 'success', 'message' => 'Cliente eliminado exitosamente']);
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Error: ' . $e->getMessage()]);
+            return $this->respondDeleted([
+                'status' => 200,
+                'message' => 'Institucion eliminada',
+                'id' => $id
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
         }
-    }
-
-    public function buscar()
-    {
-        if (!session()->get('logged_in')) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'No autorizado']);
-        }
-
-        $termino = $this->request->getGet('q');
-
-        if (empty($termino)) {
-            return $this->response->setJSON([]);
-        }
-
-        $clienteModel = new ClienteModel();
-        $clientes = $clienteModel->buscarClientes($termino);
-
-        return $this->response->setJSON($clientes);
     }
 }
