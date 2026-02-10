@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\TareaModel;
 use App\Models\TareaRolesModel;
 use App\Models\TipoTareaModel;
+use App\Models\UsuarioModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class Tareas extends ResourceController
@@ -65,13 +66,21 @@ class Tareas extends ResourceController
     {
         try {
             $tarea = new TareaModel();
+            $usuario = new UsuarioModel();
 
-            $datos = $tarea->query("SELECT tarea.id, tarea.nombre FROM tarea INNER JOIN tareas_roles ON tareas_roles.tarea_id = tarea.id WHERE tareas_roles.rol_id = $rol_id AND tarea.estado = true")->getResultArray();
+            $tareas = $tarea->query("SELECT tarea.id, tarea.nombre FROM tarea INNER JOIN tareas_roles ON tareas_roles.tarea_id = tarea.id WHERE tareas_roles.rol_id = $rol_id AND tarea.estado = true")->getResultArray();
+
+            $users = $usuario->query("SELECT usuarios.id, personas.nombres, personas.apellidos FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona_id WHERE usuarios.rol_id = $rol_id AND usuarios.estado = true")->getResultArray();
+
+            $result = [
+                "tareas" => $tareas,
+                "users" => $users
+            ];
 
             return $this->respond([
                 'status' => 200,
                 'message' => 'Tareas obtenidas correctamente',
-                'result' => $datos
+                'result' => $result
             ]);
         } catch (\Throwable $th) {
             return $this->failServerError('Error interno del servidor');
@@ -105,7 +114,7 @@ class Tareas extends ResourceController
 
                 $tarea_id = $tarea->insertID();
 
-                for ($i=0; $i < count($roles); $i++) { 
+                for ($i = 0; $i < count($roles); $i++) {
                     $datos_tarea_roles = array(
                         "tarea_id" => $tarea_id,
                         "rol_id" => $roles[$i]
@@ -129,7 +138,7 @@ class Tareas extends ResourceController
 
                 $tarea_roles->delete(['tarea_id' => $id]);
 
-                for ($i=0; $i < count($roles); $i++) { 
+                for ($i = 0; $i < count($roles); $i++) {
                     $datos_tarea_roles = array(
                         "tarea_id" => $id,
                         "rol_id" => $roles[$i]
