@@ -46,6 +46,7 @@ $routes->get('/feriados', 'Feriados::getFeriados');
 // Clientes
 $routes->post('/prospectos/crear', 'Clientes::createProspecto');
 $routes->get('prospectos', 'Clientes::getProspectos');
+$routes->get('prospecto/get-row/(:num)', 'Clientes::getProspecto/$1');
 
 // Origen
 $routes->get('origen/get-all', 'Origen::getOrigenes');

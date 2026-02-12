@@ -13,7 +13,7 @@ class ProspectosModel extends Model
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'fecha_contacto', 'origen_id', 'usuario_venta_id', 'nivel_academico_id', 'carrera_id', 'estado', 'tarea_id', 'fecha_entrega', 'usuario_jefe_valoro'];
+    protected $allowedFields = ['id', 'fecha_contacto', 'origen_id', 'usuario_venta_id', 'nivel_academico_id', 'carrera_id', 'estado', 'tarea_id', 'fecha_entrega', 'usuario_jefe_valoro', 'contenido'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';
