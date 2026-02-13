@@ -13,7 +13,7 @@ class TareaRolesModel extends Model
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'tarea_id', 'rol_id'];
+    protected $allowedFields = ['id', 'tarea_id', 'rol_id', 'prioridad'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

@@ -21,7 +21,7 @@ class Tareas extends ResourceController
             $datos = $tarea->query("SELECT tarea.id, tarea.nombre, tarea.horas_estimadas, tarea.tipo_tarea, tipo_tarea.tipo, tipo_tarea.color FROM tarea INNER JOIN tipo_tarea ON tipo_tarea.id = tarea.tipo_tarea WHERE tarea.estado = true")->getResultArray();
 
             foreach ($datos as $key => $value) {
-                $roles_tarea = $roles->query("SELECT rol_id, roles.nombre FROM tareas_roles INNER JOIN roles ON roles.id = tareas_roles.rol_id WHERE tareas_roles.tarea_id = " . $value['id'])->getResultArray();
+                $roles_tarea = $roles->query("SELECT tareas_roles.rol_id, roles.nombre, tareas_roles.prioridad FROM tareas_roles INNER JOIN roles ON roles.id = tareas_roles.rol_id WHERE tareas_roles.tarea_id = " . $value['id'])->getResultArray();
                 $datos[$key]['roles'] = $roles_tarea;
             }
 
@@ -47,7 +47,7 @@ class Tareas extends ResourceController
                 return $this->failNotFound('Tarea no encontrada');
             }
 
-            $roles_tarea = $roles->query("SELECT rol_id, roles.nombre FROM tareas_roles INNER JOIN roles ON roles.id = tareas_roles.rol_id WHERE tareas_roles.tarea_id = " . $id)->getResultArray();
+            $roles_tarea = $roles->query("SELECT rol_id, roles.nombre, tareas_roles.prioridad FROM tareas_roles INNER JOIN roles ON roles.id = tareas_roles.rol_id WHERE tareas_roles.tarea_id = " . $id)->getResultArray();
 
             return $this->respond([
                 'status' => 200,
@@ -68,7 +68,7 @@ class Tareas extends ResourceController
             $tarea = new TareaModel();
             $usuario = new UsuarioModel();
 
-            $tareas = $tarea->query("SELECT tarea.id, tarea.nombre FROM tarea INNER JOIN tareas_roles ON tareas_roles.tarea_id = tarea.id WHERE tareas_roles.rol_id = $rol_id AND tarea.estado = true")->getResultArray();
+            $tareas = $tarea->query("SELECT tarea.id, tarea.nombre, tareas_roles.prioridad FROM tarea INNER JOIN tareas_roles ON tareas_roles.tarea_id = tarea.id WHERE tareas_roles.rol_id = $rol_id AND tarea.estado = true ORDER BY tareas_roles.prioridad DESC")->getResultArray();
 
             $users = $usuario->query("SELECT usuarios.id, personas.nombres, personas.apellidos FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona_id WHERE usuarios.rol_id = $rol_id AND usuarios.estado = true")->getResultArray();
 
@@ -107,6 +107,7 @@ class Tareas extends ResourceController
             );
 
             $roles = $data->roles;
+            $prioridad = $data->prioridad;
 
             if ($id == 0) {
 
@@ -117,7 +118,8 @@ class Tareas extends ResourceController
                 for ($i = 0; $i < count($roles); $i++) {
                     $datos_tarea_roles = array(
                         "tarea_id" => $tarea_id,
-                        "rol_id" => $roles[$i]
+                        "rol_id" => $roles[$i],
+                        'prioridad' => $prioridad[$i]
                     );
                     $tarea_roles->insert($datos_tarea_roles);
                 }
@@ -136,12 +138,15 @@ class Tareas extends ResourceController
             } else {
                 $tarea->update($id, $datos_tarea);
 
-                $tarea_roles->delete(['tarea_id' => $id]);
+                $tarea_roles
+                    ->where('tarea_id', $id)
+                    ->delete();
 
                 for ($i = 0; $i < count($roles); $i++) {
                     $datos_tarea_roles = array(
                         "tarea_id" => $id,
-                        "rol_id" => $roles[$i]
+                        "rol_id" => $roles[$i],
+                        "prioridad" => $prioridad[$i]
                     );
                     $tarea_roles->insert($datos_tarea_roles);
                 }
