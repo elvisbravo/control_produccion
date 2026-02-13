@@ -14,7 +14,9 @@ if (!function_exists('crear_notificacion')) {
             'tipo' => $tipo,
             'prioridad' => $prioridad,
             'es_leida' => false,
-            'fecha_lectura' => null
+            'fecha_lectura' => null,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
         ];
 
         return $builder->insert($data);
@@ -37,7 +39,9 @@ if (!function_exists('crear_notificacion_masiva')) {
                 'tipo' => $tipo,
                 'prioridad' => $prioridad,
                 'es_leida' => false,
-                'fecha_lectura' => date('Y-m-d H:i:s')
+                'fecha_lectura' => date('Y-m-d H:i:s'),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
             ];
         }
 

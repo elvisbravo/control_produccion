@@ -1,0 +1,114 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Models\CarreraModel;
+use App\Models\NotificacionModel;
+use CodeIgniter\RESTful\ResourceController;
+
+class Notificaciones extends ResourceController
+{
+    protected $format = 'json';
+
+    public function getNotificaciones($id_user)
+    {
+        try {
+            $notificacion = new NotificacionModel();
+
+            $datos = $notificacion->query("SELECT n.id, n.titulo, n.mensaje, n.created_at, p.nombres, p.apellidos FROM notificaciones n INNER JOIN usuarios u ON u.id = n.remitente_id INNER JOIN personas p ON p.id = u.persona_id WHERE n.usuario_id = $id_user ORDER BY n.id DESC")->getResultArray();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Notificaciones obtenidas correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function countNotification($id_user)
+    {
+        try {
+            $notificacion = new NotificacionModel();
+
+            $datos = $notificacion->query("SELECT count(*) as cantidad FROM notificaciones WHERE usuario_id = $id_user and es_leida = false")->getRow();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Cantidad de notificaciones obtenidas correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function create()
+    {
+        $carrera = new CarreraModel();
+
+        try {
+            $data = json_decode($this->request->getBody(true));
+
+            $id = $data->id;
+
+            $datos_carrera = array(
+                "nombre" => $data->nombre,
+                "institucion_id" => $data->institucion_id,
+                "estado" => true
+            );
+
+            if ($id == 0) {
+
+                $carrera->insert($datos_carrera);
+                return $this->respondCreated([
+                    'status' => 201,
+                    'message' => 'Carrera creada correctamente',
+                    'result' => null
+                ]);
+            } else {
+                $carrera->update($id, $datos_carrera);
+                return $this->respond([
+                    'status' => 200,
+                    'message' => 'Carrera actualizada correctamente',
+                    'result' => null
+                ]);
+            }
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function update($id = null)
+    {
+        $data = [];
+
+        return $this->respond([
+            'mensaje' => 'Cliente actualizado',
+            'id' => $id,
+            'data' => $data
+        ]);
+    }
+
+    public function delete($id = null)
+    {
+        try {
+            $carrera = new CarreraModel();
+
+            $datos_carrera = array(
+                "estado" => false
+            );
+
+            $carrera->update($id, $datos_carrera);
+
+            return $this->respondDeleted([
+                'status' => 200,
+                'message' => 'Carrera eliminada',
+                'id' => $id
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
+        }
+    }
+}

@@ -9,6 +9,9 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Auth::signin');
 $routes->post('/auth/login', 'Auth::login');
 
+$routes->get('notificaciones/(:num)', 'Notificaciones::getNotificaciones/$1');
+$routes->get('count-notificaciones/(:num)', 'Notificaciones::countNotification/$1');
+
 // Usuarios
 $routes->get('/usuarios', 'Usuarios::index');
 $routes->post('/usuarios/guardar', 'Usuarios::guardar');
@@ -52,6 +55,9 @@ $routes->get('prospecto/get-row/(:num)', 'Clientes::getProspecto/$1');
 $routes->get('origen/get-all', 'Origen::getOrigenes');
 $routes->post('origen/save', 'Origen::create');
 $routes->get('origen/delete/(:num)', 'Origen::delete/$1');
+
+// horario
+$routes->get('horario/get-by-id/(:num)', 'Horario::getHorarioById/$1');
 
 // Permisos
 $routes->get('/permisos', 'Permisos::index');

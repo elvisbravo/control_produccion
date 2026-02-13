@@ -15,7 +15,8 @@ class Clientes extends ResourceController
 
     public function __construct()
     {
-        helper('notificacion_helper'); // ← AQUÍ
+        helper('notificacion_helper');
+        helper('horario_helper');
     }
 
     public function getProspectos()
@@ -125,6 +126,8 @@ class Clientes extends ResourceController
                 }
 
                 crear_notificacion($data->personal_id, $data->usuarioVentaId, 'Potencial Cliente', $name_tarea, 'info', 1);
+
+                asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $data_tarea['nombre']);
 
                 $persona->db->transComplete();
 
