@@ -102,7 +102,10 @@ class Clientes extends ResourceController
                     'carrera_id' => $data->carreraId == '' ? null : $data->carreraId,
                     'estado' => true,
                     'fecha_entrega' => $data->fechaEntrega == '' ? null : $data->fechaEntrega,
-                    'contenido' => $data->contenido
+                    'contenido' => $data->contenido,
+                    'link_drive' => $data->linkDrive,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
                 ]);
 
                 $id_prospecto = $prospecto->getInsertID();

@@ -12,7 +12,9 @@ if (!function_exists('crear_horario')) {
             'fecha' => $fecha,
             'hora_inicio' => $hora_inicio,
             'hora_fin' => $hora_fin,
-            'estado' => true
+            'estado' => true,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
         ];
 
         return $builder->insert($data);

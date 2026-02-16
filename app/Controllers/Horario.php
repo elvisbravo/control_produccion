@@ -15,11 +15,11 @@ class Horario extends ResourceController
         try {
             $horario = new HorarioUsuarioModel();
 
-            $datos = $horario->query("SELECT id, titulo as title, concat(fecha,' ', hora_inicio) as start, concat(fecha,' ', hora_fin) as end FROM horario_usuario WHERE usuario_id = $usuario_id AND estado = true")->getResultArray();
+            $datos = $horario->query("SELECT id, titulo as title, concat(fecha,' ', hora_inicio) as start, concat(fecha,' ', hora_fin) as end, created_at FROM horario_usuario WHERE usuario_id = $usuario_id AND estado = true")->getResultArray();
 
             return $this->respond([
                 'status' => 200,
-                'message' => 'Carreras obtenidas correctamente',
+                'message' => 'Horario obtenido correctamente',
                 'result' => $datos
             ]);
         } catch (\Throwable $th) {
