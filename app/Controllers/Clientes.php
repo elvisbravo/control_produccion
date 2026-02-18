@@ -25,7 +25,7 @@ class Clientes extends ResourceController
             $prospecto = new ProspectosModel();
             $prospectoPersona = new ProspectoPersonaModel();
 
-            $datos = $prospecto->query("SELECT p.id, p.fecha_contacto, p.fecha_entrega, p.contenido, p.estado, o.nombre as origen, na.nombre as nivel_academico, c.nombre as carrera, i.nombre as institucion, i.abreviatura FROM prospectos p LEFT JOIN origen o ON o.id = p.origen_id LEFT JOIN nivel_academico na ON na.id = p.nivel_academico_id LEFT JOIN carreras c ON c.id = p.carrera_id LEFT JOIN institucion i ON i.id = c.institucion_id WHERE p.estado = true")->getResultArray();
+            $datos = $prospecto->query("SELECT p.id, TO_CHAR(p.fecha_contacto, 'DD-MM-YYYY') AS fecha_contacto, TO_CHAR(p.fecha_entrega, 'DD-MM-YYYY') AS fecha_entrega, p.contenido, p.estado, p.seguimiento, o.nombre as origen, na.nombre as nivel_academico, c.nombre as carrera, i.nombre as institucion, i.abreviatura FROM prospectos p LEFT JOIN origen o ON o.id = p.origen_id LEFT JOIN nivel_academico na ON na.id = p.nivel_academico_id LEFT JOIN carreras c ON c.id = p.carrera_id LEFT JOIN institucion i ON i.id = c.institucion_id WHERE p.estado = true")->getResultArray();
 
             foreach ($datos as $key => $value) {
                 $id = $value['id'];
@@ -104,6 +104,7 @@ class Clientes extends ResourceController
                     'fecha_entrega' => $data->fechaEntrega == '' ? null : $data->fechaEntrega,
                     'contenido' => $data->contenido,
                     'link_drive' => $data->linkDrive,
+                    'seguimiento' => 'Nuevo',
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ]);
