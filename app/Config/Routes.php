@@ -64,3 +64,5 @@ $routes->get('/permisos', 'Permisos::index');
 $routes->get('/permisos/lista-roles', 'Permisos::listaRoles');
 $routes->post('/permisos/crear-rol', 'Permisos::createRol');
 $routes->get('/permisos/eliminar-rol/(:num)', 'Permisos::deleteRol/$1');
+
+$routes->get('actividades/(:num)', 'Actividades::getActividades/$1');

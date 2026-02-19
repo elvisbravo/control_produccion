@@ -1,14 +1,13 @@
 <?php
 
 if (!function_exists('crear_horario')) {
-    function crear_horario($usuario_id, $fecha, $hora_inicio, $hora_fin, $title)
+    function crear_horario($actividad_id, $fecha, $hora_inicio, $hora_fin)
     {
         $db = \Config\Database::connect();
         $builder = $db->table('horario_usuario');
 
         $data = [
-            'usuario_id' => $usuario_id,
-            'titulo' => $title,
+            'actividad_id' => $actividad_id,
             'fecha' => $fecha,
             'hora_inicio' => $hora_inicio,
             'hora_fin' => $hora_fin,
@@ -31,7 +30,7 @@ if (!function_exists('convertir_a_minutos')) {
 
 if (!function_exists('asignar_horas_trabajo')) {
 
-    function asignar_horas_trabajo($usuario_id, $duracion, $title)
+    function asignar_horas_trabajo($usuario_id, $duracion, $actividad_id)
     {
         $db = \Config\Database::connect();
 
@@ -49,9 +48,11 @@ if (!function_exists('asignar_horas_trabajo')) {
 
         // 🔎 Buscar último horario registrado
         $horario = $db->table('horario_usuario')
-            ->where('usuario_id', $usuario_id)
-            ->orderBy('fecha', 'DESC')
-            ->orderBy('hora_fin', 'DESC')
+            ->select('horario_usuario.*')
+            ->join('actividades', 'actividades.id = horario_usuario.actividad_id')
+            ->where('actividades.usuario_id', $usuario_id)
+            ->orderBy('horario_usuario.fecha', 'DESC')
+            ->orderBy('horario_usuario.hora_fin', 'DESC')
             ->get()
             ->getRow();
 
@@ -127,7 +128,7 @@ if (!function_exists('asignar_horas_trabajo')) {
                 $horaFin = $fechaActual->format('H:i:s');
 
                 // Guardar bloque
-                crear_horario($usuario_id, $fechaStr, $horaInicio, $horaFin, $title);
+                crear_horario($actividad_id, $fechaStr, $horaInicio, $horaFin);
 
                 $minutosRestantes -= $minutosAsignar;
 

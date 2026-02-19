@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\ActividadesModel;
+use App\Models\HistorialEstadoProspectoModel;
 use App\Models\institucionModel;
 use App\Models\PersonaModel;
 use App\Models\ProspectoPersonaModel;
@@ -75,6 +77,8 @@ class Clientes extends ResourceController
         $persona = new PersonaModel();
         $prospecto_persona = new ProspectoPersonaModel();
         $tarea = new TareaModel();
+        $actividad = new ActividadesModel();
+        $estados = new HistorialEstadoProspectoModel();
 
         $persona->db->transStart();
 
@@ -104,12 +108,25 @@ class Clientes extends ResourceController
                     'fecha_entrega' => $data->fechaEntrega == '' ? null : $data->fechaEntrega,
                     'contenido' => $data->contenido,
                     'link_drive' => $data->linkDrive,
-                    'seguimiento' => 'Nuevo',
+                    'seguimiento' => 'Pendiente',
+                    'estado_cliente' => 'Prospecto',
+                    'prioridad' => $data->prioridad,
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ]);
 
                 $id_prospecto = $prospecto->getInsertID();
+
+                $data_estado = [
+                    "prospecto_id" => $id_prospecto,
+                    "usuario_id" => $data->personal_id,
+                    "estado" => 'Prospecto',
+                    "fecha_inicio" => date('Y-m-d H:i:s'),
+                    "fecha_fin" => null,
+                    "comentario" => "Prospecto creado"
+                ];
+
+                $estados->insert($data_estado);
 
                 for ($i = 0; $i < count($nombres); $i++) {
                     $datos_persona = array(
@@ -129,9 +146,26 @@ class Clientes extends ResourceController
                     ]);
                 }
 
+                //insertar actividad
+                $data_actividad = [
+                    "prospecto_id" => $id_prospecto,
+                    "usuario_id" => $data->personal_id,
+                    "estado" => true,
+                    "tiempo_estimado" => "00:00",
+                    "tiempo_real" => "00:00",
+                    "fecha_inicio" => null,
+                    "fecha_fin" => null,
+                    "created_at" => date('Y-m-d H:i:s'),
+                    "updated_at" => date('Y-m-d H:i:s')
+                ];
+
+                $actividad->insert($data_actividad);
+
+                $id_actividad = $actividad->getInsertID();
+
                 crear_notificacion($data->personal_id, $data->usuarioVentaId, 'Potencial Cliente', $name_tarea, 'info', 1);
 
-                asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $data_tarea['nombre']);
+                asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad);
 
                 $persona->db->transComplete();
 
