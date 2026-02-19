@@ -144,3 +144,49 @@ if (!function_exists('asignar_horas_trabajo')) {
         return true;
     }
 }
+
+if (!function_exists('verificar_tiempo_actividad')) {
+    function verificar_tiempo_actividad($usuario_id, $duracion)
+    {
+        $db = \Config\Database::connect();
+
+        $horario = $db->table('horario_usuario')
+            ->select('horario_usuario.*')
+            ->join('actividades', 'actividades.id = horario_usuario.actividad_id')
+            ->where('actividades.usuario_id', $usuario_id)
+            ->orderBy('horario_usuario.fecha', 'DESC')
+            ->orderBy('horario_usuario.hora_fin', 'DESC')
+            ->get()
+            ->getRow();
+
+        // Convertir duración requerida a minutos
+        $minutosRequeridos = convertir_a_minutos($duracion);
+
+        if (!$horario) {
+            return [
+                'status' => true,
+                'minutos_disponibles' => 660, // Asumiendo bloque completo (ej. 08:00 a 19:00)
+                'ultima_hora' => null
+            ];
+        }
+
+        // Definir última hora registrada y el límite de las 19:00
+        $ultimoFin = new DateTime($horario->fecha . ' ' . $horario->hora_fin);
+        $limite = new DateTime($horario->fecha . ' 19:00:00');
+
+        // Calcular minutos disponibles hasta el límite
+        $intervalo = $ultimoFin->diff($limite);
+        $minutosDisponibles = ($intervalo->h * 60) + $intervalo->i;
+
+        // Si el último fin es después del límite (por alguna razón), los minutos son 0
+        if ($ultimoFin > $limite) {
+            $minutosDisponibles = 0;
+        }
+
+        return [
+            'status' => ($minutosDisponibles >= $minutosRequeridos),
+            'minutos_disponibles' => $minutosDisponibles,
+            'ultima_hora' => $horario->hora_fin
+        ];
+    }
+}

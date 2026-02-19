@@ -19,6 +19,7 @@ class Clientes extends ResourceController
     {
         helper('notificacion_helper');
         helper('horario_helper');
+        helper('base_helper');
     }
 
     public function getProspectos()
@@ -96,6 +97,16 @@ class Clientes extends ResourceController
                 $data_tarea = $tarea->find($data->tarea_id);
                 $name_tarea = $data_tarea['nombre'];
 
+                $verificar_tiempo = verificar_tiempo_actividad($data->personal_id, $data_tarea['horas_estimadas']);
+
+                if ($verificar_tiempo['status'] == false) {
+                    return $this->respond([
+                        'status' => 400,
+                        'messages' => 'No se puede crear el prospecto, no hay tiempo disponible',
+                        'result' => $verificar_tiempo
+                    ]);
+                }
+
                 $prospecto->insert([
                     'fecha_contacto' => date('Y-m-d'),
                     'origen_id' => 1,
@@ -156,7 +167,8 @@ class Clientes extends ResourceController
                     "fecha_inicio" => null,
                     "fecha_fin" => null,
                     "created_at" => date('Y-m-d H:i:s'),
-                    "updated_at" => date('Y-m-d H:i:s')
+                    "updated_at" => date('Y-m-d H:i:s'),
+                    "color" => extraerColorAleatorio()
                 ];
 
                 $actividad->insert($data_actividad);
