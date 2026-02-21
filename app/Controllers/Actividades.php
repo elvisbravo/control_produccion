@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ActividadesModel;
+use App\Models\DriveLinksModel;
 use App\Models\PersonaModel;
 use App\Models\ProspectoPersonaModel;
 use App\Models\ProspectosModel;
@@ -16,6 +17,38 @@ class Actividades extends ResourceController
     public function __construct()
     {
         helper('notificacion_helper');
+    }
+
+    public function getEstadosActividades()
+    {
+        try {
+            $actividad = new ActividadesModel();
+
+            $data = json_decode($this->request->getBody(true));
+
+            $id = $data->id;
+            $fecha_inicio = $data->fecha_inicio;
+            $fecha_fin = $data->fecha_fin;
+            $estado_progreso = $data->estado_progreso;
+
+            $datos = $actividad->query("SELECT a.id, a.prospecto_id, c.nombre AS carrera_nombre, p.fecha_contacto, a.prioridad, t.nombre, p.created_at, a.estado_progreso, per.nombres, per.apellidos, i.abreviatura as sigla
+            FROM actividades a 
+            INNER JOIN tarea t ON a.tarea_id = t.id
+            INNER JOIN prospectos p ON a.prospecto_id = p.id
+            INNER JOIN usuarios u ON u.id = p.usuario_venta_id
+            INNER JOIN personas per ON per.id = u.persona_id
+            left JOIN carreras c ON c.id = p.carrera_id
+            left JOIN institucion i ON i.id = c.institucion_id
+            WHERE a.estado = true AND a.usuario_id = $id AND a.estado_progreso = '$estado_progreso' AND a.created_at >= '$fecha_inicio' AND a.created_at < (DATE '$fecha_fin' + INTERVAL '1 day') ORDER BY a.id ASC")->getResultArray();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Actividades obtenidas correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Exception $e) {
+            return $this->failServerError('Error interno del servidor ' . $e->getMessage());
+        }
     }
 
     public function getActividades($id)
@@ -49,10 +82,10 @@ class Actividades extends ResourceController
             $prospecto_persona = new ProspectoPersonaModel();
             $persona = new PersonaModel();
 
-            $datos = $actividad->query("SELECT act.id, act.prospecto_id,pro.fecha_contacto, pro.fecha_entrega, pro.contenido, pro.link_drive, pro.seguimiento, pro.prioridad, pro.estado_cliente, o.nombre as origen, t.nombre as tarea, na.nombre as nivel_academico, c.nombre as carrera, i.nombre as institucion, i.abreviatura as sigla, p.nombres, p.apellidos
+            $datos = $actividad->query("SELECT act.id, act.prospecto_id,pro.fecha_contacto, pro.fecha_entrega, pro.contenido, pro.link_drive, act.estado_progreso, act.prioridad, pro.estado_cliente, o.nombre as origen, t.nombre as tarea, na.nombre as nivel_academico, c.nombre as carrera, i.nombre as institucion, i.abreviatura as sigla, p.nombres, p.apellidos
             FROM actividades act 
+            INNER JOIN tarea t ON act.tarea_id = t.id 
             INNER JOIN prospectos pro ON act.prospecto_id = pro.id 
-            INNER JOIN tarea t ON pro.tarea_id = t.id 
             LEFT JOIN origen o ON pro.origen_id = o.id 
             LEFT JOIN nivel_academico na ON na.id = pro.nivel_academico_id 
             LEFT JOIN carreras c ON c.id = pro.carrera_id 
@@ -86,46 +119,39 @@ class Actividades extends ResourceController
                 'result' => $datos
             ]);
         } catch (\Exception $e) {
-            return $this->failServerError('Error interno del servidor ');
+            return $this->failServerError('Error interno del servidor ' . $e->getMessage());
         }
     }
 
-    public function updateProceso()
+    public function updateLinkDrive()
     {
         try {
-            $actividad = new ActividadesModel();
             $prospecto = new ProspectosModel();
-            $tarea = new TareaModel();
+            $drive_links = new DriveLinksModel();
 
             $data = json_decode($this->request->getBody(true));
-
-            $id_actividad = $data->id_actividad;
 
             $id_prospecto = $data->id_prospecto;
             $usuario = $data->usuario;
 
             $datos_prospecto = array(
-                "seguimiento" => "En proceso",
                 "link_drive" => $data->link_drive
             );
 
             $prospecto->update($id_prospecto, $datos_prospecto);
 
-            $datos_actividad = array(
-                "fecha_inicio" => date('Y-m-d H:i:s')
+            $datos_drive_links = array(
+                "usuario_id" => $usuario,
+                "prospecto_id" => $id_prospecto,
+                "link_drive" => $data->link_drive,
+                "created_at" => date('Y-m-d H:i:s')
             );
 
-            $actividad->update($id_actividad, $datos_actividad);
-
-            $data_prospecto = $prospecto->find($id_prospecto);
-
-            $data_tarea = $tarea->find($data_prospecto['tarea_id']);
-
-            crear_notificacion($data_prospecto['usuario_venta_id'], $usuario, 'Potencial Cliente - En proceso', $data_tarea['nombre'], 'warning', 1);
+            $drive_links->insert($datos_drive_links);
 
             return $this->respond([
                 'status' => 200,
-                'message' => 'Actividad actualizada correctamente',
+                'message' => 'Link Drive actualizado correctamente',
                 'result' => null
             ]);
         } catch (\Throwable $th) {

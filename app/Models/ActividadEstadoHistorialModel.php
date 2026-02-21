@@ -4,16 +4,16 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class ActividadesModel extends Model
+class ActividadEstadoHistorialModel extends Model
 {
-    protected $table      = 'actividades';
+    protected $table      = 'actividad_estado_historial';
     protected $primaryKey = 'id';
 
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'prospecto_id', 'usuario_id', 'estado', 'prioridad', 'created_at', 'updated_at', 'color', 'estado_progreso', 'tarea_id'];
+    protected $allowedFields = ['id', 'actividad_id', 'estado_progreso', 'fecha_inicio', 'fecha_fin', 'duracion_segundos'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

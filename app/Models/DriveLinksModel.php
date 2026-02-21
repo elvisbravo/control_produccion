@@ -4,16 +4,16 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class ActividadesModel extends Model
+class DriveLinksModel extends Model
 {
-    protected $table      = 'actividades';
+    protected $table      = 'drive_links';
     protected $primaryKey = 'id';
 
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'prospecto_id', 'usuario_id', 'estado', 'prioridad', 'created_at', 'updated_at', 'color', 'estado_progreso', 'tarea_id'];
+    protected $allowedFields = ['id', 'usuario_id', 'prospecto_id', 'link_drive', 'created_at'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';
