@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ActividadesModel;
+use App\Models\ActividadEstadoHistorialModel;
 use App\Models\DriveLinksModel;
 use App\Models\PersonaModel;
 use App\Models\ProspectoPersonaModel;
@@ -31,15 +32,20 @@ class Actividades extends ResourceController
             $fecha_fin = $data->fecha_fin;
             $estado_progreso = $data->estado_progreso;
 
-            $datos = $actividad->query("SELECT a.id, a.prospecto_id, c.nombre AS carrera_nombre, p.fecha_contacto, a.prioridad, t.nombre, p.created_at, a.estado_progreso, per.nombres, per.apellidos, i.abreviatura as sigla
+            $datos = $actividad->query("SELECT a.id, a.prospecto_id, c.nombre AS carrera_nombre, p.fecha_contacto, a.prioridad, t.nombre, p.created_at, a.estado_progreso, per.nombres, per.apellidos, i.abreviatura as sigla, aeh.fecha_inicio, aeh.fecha_fin
             FROM actividades a 
             INNER JOIN tarea t ON a.tarea_id = t.id
             INNER JOIN prospectos p ON a.prospecto_id = p.id
             INNER JOIN usuarios u ON u.id = p.usuario_venta_id
             INNER JOIN personas per ON per.id = u.persona_id
-            left JOIN carreras c ON c.id = p.carrera_id
-            left JOIN institucion i ON i.id = c.institucion_id
-            WHERE a.estado = true AND a.usuario_id = $id AND a.estado_progreso = '$estado_progreso' AND a.created_at >= '$fecha_inicio' AND a.created_at < (DATE '$fecha_fin' + INTERVAL '1 day') ORDER BY a.id ASC")->getResultArray();
+            LEFT JOIN carreras c ON c.id = p.carrera_id
+            LEFT JOIN institucion i ON i.id = c.institucion_id
+            LEFT JOIN actividad_estado_historial aeh ON aeh.id = (
+                SELECT MAX(id) 
+                FROM actividad_estado_historial 
+                WHERE actividad_id = a.id AND estado_progreso = a.estado_progreso
+            )
+            WHERE a.estado = true AND a.usuario_id = $id AND a.estado_progreso = '$estado_progreso' AND aeh.fecha_inicio >= '$fecha_inicio' AND aeh.fecha_inicio < (DATE '$fecha_fin' + INTERVAL '1 day') ORDER BY a.id ASC")->getResultArray();
 
             return $this->respond([
                 'status' => 200,
@@ -221,6 +227,59 @@ class Actividades extends ResourceController
                 'status' => 200,
                 'message' => 'Actividad eliminada',
                 'id' => $id
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
+        }
+    }
+
+    public function updateEstado()
+    {
+        $actividad = new ActividadesModel();
+        $historial_actividad_estados = new ActividadEstadoHistorialModel();
+
+        try {
+
+            $data = json_decode($this->request->getBody(true));
+
+            $id_actividad = $data->id_actividad;
+            $estado = $data->estado_progreso;
+
+            $datos_actividad = array(
+                "estado_progreso" => $estado
+            );
+
+            $actividad->update($id_actividad, $datos_actividad);
+
+            $datos_historial_estado_ = $historial_actividad_estados->where('actividad_id', $id_actividad)->first();
+
+            $fecha = date('Y-m-d H:i:s');
+
+            $duracion_segundos = strtotime($fecha) - strtotime($datos_historial_estado_['fecha_inicio']);
+
+            $duracion_minutos = $duracion_segundos / 60;
+
+            $datos_historial_estado = array(
+                "fecha_fin" => $fecha,
+                "duracion_segundos" => $duracion_minutos
+            );
+
+            $historial_actividad_estados->update($datos_historial_estado_['id'], $datos_historial_estado);
+
+            $datos_historial = array(
+                "actividad_id" => $id_actividad,
+                "estado_progreso" => $estado,
+                "fecha_inicio" => $fecha,
+                "fecha_fin" => null,
+                "usuario_id" => $data->usuario_id
+            );
+
+            $historial_actividad_estados->insert($datos_historial);
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Estado actualizado correctamente',
+                'result' => null
             ]);
         } catch (\Throwable $th) {
             return $this->failServerError('Error interno del servidor: ' . $th->getMessage());

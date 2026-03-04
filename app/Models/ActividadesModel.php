@@ -13,7 +13,7 @@ class ActividadesModel extends Model
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'prospecto_id', 'usuario_id', 'estado', 'prioridad', 'created_at', 'updated_at', 'color', 'estado_progreso', 'tarea_id'];
+    protected $allowedFields = ['id', 'prospecto_id', 'usuario_id', 'estado', 'prioridad', 'created_at', 'updated_at', 'color', 'estado_progreso', 'tarea_id', 'tiempo_estimado_minutos', 'tiempo_real_minutos'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

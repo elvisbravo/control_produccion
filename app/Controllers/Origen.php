@@ -45,19 +45,19 @@ class Origen extends ResourceController
                 $origen->insert($datos_origen);
                 return $this->respondCreated([
                     'status' => 201,
-                    'message' => 'Carrera creada correctamente',
+                    'message' => 'Origen de contacto creada correctamente',
                     'result' => null
                 ]);
             } else {
                 $origen->update($id, $datos_origen);
                 return $this->respond([
                     'status' => 200,
-                    'message' => 'Carrera actualizada correctamente',
+                    'message' => 'Origen de contacto actualizada correctamente',
                     'result' => null
                 ]);
             }
-        } catch (\Throwable $th) {
-            return $this->failServerError('Error interno del servidor');
+        } catch (\Exception $e) {
+            return $this->failServerError('Error interno del servidor ' . $e->getMessage());
         }
     }
 
@@ -85,7 +85,7 @@ class Origen extends ResourceController
 
             return $this->respondDeleted([
                 'status' => 200,
-                'message' => 'Carrera eliminada',
+                'message' => 'Origen de contacto eliminada',
                 'id' => $id
             ]);
         } catch (\Throwable $th) {

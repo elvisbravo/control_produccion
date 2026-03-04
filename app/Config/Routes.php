@@ -69,3 +69,4 @@ $routes->get('actividades/(:num)', 'Actividades::getActividades/$1');
 $routes->get('actividad/get-row/(:num)', 'Actividades::getActividadById/$1');
 $routes->post('actividad/update-link-drive', 'Actividades::updateLinkDrive');
 $routes->post('actividad/get-estados-actividades', 'Actividades::getEstadosActividades');
+$routes->post('actividad/update-estado', 'Actividades::updateEstado');

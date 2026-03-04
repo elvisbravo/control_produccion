@@ -71,8 +71,8 @@ if (!function_exists('asignar_horas_trabajo')) {
             $fechaActual = clone $ahora;
         }
 
-        // Convertir duración a minutos
-        $minutosRestantes = convertir_a_minutos($duracion);
+        // La duración ya viene en minutos
+        $minutosRestantes = (int)$duracion;
 
         while ($minutosRestantes > 0) {
 
@@ -159,8 +159,8 @@ if (!function_exists('verificar_tiempo_actividad')) {
             ->get()
             ->getRow();
 
-        // Convertir duración requerida a minutos
-        $minutosRequeridos = convertir_a_minutos($duracion);
+        // La duración requerida ya viene en minutos
+        $minutosRequeridos = (int)$duracion;
 
         if (!$horario) {
             return [

@@ -108,7 +108,7 @@ class Clientes extends ResourceController
                 $data_tarea = $tarea->find($data->tarea_id);
                 $name_tarea = $data_tarea['nombre'];
 
-                $verificar_tiempo = verificar_tiempo_actividad($data->personal_id, $data_tarea['horas_estimadas']);
+                /*$verificar_tiempo = verificar_tiempo_actividad($data->personal_id, $data_tarea['horas_estimadas']);
 
                 if ($verificar_tiempo['status'] == false) {
                     return $this->respond([
@@ -116,7 +116,7 @@ class Clientes extends ResourceController
                         'messages' => 'No se puede crear el prospecto, no hay tiempo disponible',
                         'result' => $verificar_tiempo
                     ]);
-                }
+                }*/
 
                 $prospecto->insert([
                     'fecha_contacto' => date('Y-m-d'),
