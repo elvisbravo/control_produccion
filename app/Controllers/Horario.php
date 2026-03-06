@@ -15,7 +15,7 @@ class Horario extends ResourceController
         try {
             $horario = new HorarioUsuarioModel();
 
-            $datos = $horario->query("SELECT hu.id, t.nombre as title, concat(hu.fecha,' ', hu.hora_inicio) as start, concat(hu.fecha,' ', hu.hora_fin) as end, hu.created_at, act.color FROM horario_usuario hu INNER JOIN actividades act ON hu.actividad_id = act.id INNER JOIN prospectos p ON act.prospecto_id = p.id INNER JOIN tarea t ON p.tarea_id = t.id WHERE act.usuario_id = $usuario_id AND hu.estado = true")->getResultArray();
+            $datos = $horario->query("SELECT hu.id, t.nombre as title, concat(hu.fecha,' ', hu.hora_inicio) as start, concat(hu.fecha,' ', hu.hora_fin) as end, hu.created_at, act.color FROM horario_usuario hu INNER JOIN actividades act ON hu.actividad_id = act.id INNER JOIN prospectos p ON act.prospecto_id = p.id INNER JOIN tarea t ON act.tarea_id = t.id WHERE act.usuario_id = $usuario_id AND hu.estado = true")->getResultArray();
 
             return $this->respond([
                 'status' => 200,
@@ -24,6 +24,39 @@ class Horario extends ResourceController
             ]);
         } catch (\Throwable $th) {
             return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function getHorarioUsuario($usuario_id)
+    {
+        try {
+            $horario = new HorarioUsuarioModel();
+
+            $datos = $horario->query("
+                SELECT 
+                    hu.id, 
+                    t.nombre as title, 
+                    concat(hu.fecha,' ', hu.hora_inicio) as start, 
+                    concat(hu.fecha,' ', hu.hora_fin) as end, 
+                    hu.tipo,
+                    hu.duracion_minutos,
+                    act.color,
+                    hu.actividad_id
+                FROM horario_usuario hu 
+                INNER JOIN actividades act ON hu.actividad_id = act.id 
+                INNER JOIN prospectos p ON act.prospecto_id = p.id 
+                INNER JOIN tarea t ON act.tarea_id = t.id 
+                WHERE hu.usuario_id = $usuario_id 
+                AND hu.estado = true
+            ")->getResultArray();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Horario detallado obtenido correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
         }
     }
 

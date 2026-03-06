@@ -12,7 +12,7 @@ class HorarioUsuarioModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'usuario_id', 'fecha', 'hora_inicio', 'hora_fin', 'estado', 'created_at', 'updated_at', 'usuario_id', 'duracion_minutos', 'tipo', 'orden'];
+    protected $allowedFields = ['id', 'actividad_id', 'usuario_id', 'fecha', 'hora_inicio', 'hora_fin', 'estado', 'created_at', 'updated_at', 'duracion_minutos', 'tipo', 'orden'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

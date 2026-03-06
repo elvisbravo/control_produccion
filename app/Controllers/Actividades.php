@@ -18,6 +18,7 @@ class Actividades extends ResourceController
     public function __construct()
     {
         helper('notificacion_helper');
+        helper('horario_helper');
     }
 
     public function getEstadosActividades()
@@ -251,7 +252,7 @@ class Actividades extends ResourceController
 
             $actividad->update($id_actividad, $datos_actividad);
 
-            $datos_historial_estado_ = $historial_actividad_estados->where('actividad_id', $id_actividad)->first();
+            $datos_historial_estado_ = $historial_actividad_estados->where('actividad_id', $id_actividad)->orderBy('id', 'DESC')->first();
 
             $fecha = date('Y-m-d H:i:s');
 
@@ -275,6 +276,46 @@ class Actividades extends ResourceController
             );
 
             $historial_actividad_estados->insert($datos_historial);
+
+            if ($estado == 'Finalizado') {
+                $db = \Config\Database::connect();
+                // 1. Consultar la tabla actividad_estado_historial para obtener el estado inmediatamente anterior al que acabamos de insertar
+                $horario_inicio = $db->table('actividad_estado_historial')
+                    ->where('actividad_id', $id_actividad)
+                    ->where('estado_progreso !=', $estado) // Usamos la variable $estado directamente para que coincida exactamente con lo que se acaba de insertar
+                    ->orderBy('id', 'DESC')
+                    ->get()
+                    ->getRow();
+
+                if ($horario_inicio) {
+                    $datetimeInicio = new \DateTime($horario_inicio->fecha_inicio ?? $horario_inicio->created_at);
+                    $datetimeFin = new \DateTime($fecha);
+                    $intervalo = $datetimeInicio->diff($datetimeFin);
+
+                    // Calcular minutos totales transcurridos
+                    $minutos_ejecutados = ($intervalo->days * 24 * 60) + ($intervalo->h * 60) + $intervalo->i;
+
+                    // 2. Insertar en horario_usuario como ejecutado usando el helper
+                    crear_horario(
+                        $id_actividad,
+                        $datetimeInicio->format('Y-m-d'),
+                        $datetimeInicio->format('H:i:s'),
+                        $datetimeFin->format('H:i:s'),
+                        $data->usuario_id,
+                        $minutos_ejecutados,
+                        'ejecutado'
+                    );
+
+                    // Desactivar los bloques 'programado' antiguos para evitar doble contabilización.
+                    $db->table('horario_usuario')
+                        ->where('actividad_id', $id_actividad)
+                        ->where('tipo', 'programado')
+                        ->update(['estado' => false]);
+
+                    // 3. Reorganizar el resto de tareas programadas del usuario
+                    reorganizar_horarios_usuario($data->usuario_id);
+                }
+            }
 
             return $this->respond([
                 'status' => 200,

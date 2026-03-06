@@ -58,6 +58,7 @@ $routes->get('origen/delete/(:num)', 'Origen::delete/$1');
 
 // horario
 $routes->get('horario/get-by-id/(:num)', 'Horario::getHorarioById/$1');
+$routes->get('horario/get-usuario/(:num)', 'Horario::getHorarioUsuario/$1');
 
 // Permisos
 $routes->get('/permisos', 'Permisos::index');

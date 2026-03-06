@@ -1,7 +1,7 @@
 <?php
 
 if (!function_exists('crear_horario')) {
-    function crear_horario($actividad_id, $fecha, $hora_inicio, $hora_fin)
+    function crear_horario($actividad_id, $fecha, $hora_inicio, $hora_fin, $usuario_id, $duracion_minutos, $tipo, $orden = null)
     {
         $db = \Config\Database::connect();
         $builder = $db->table('horario_usuario');
@@ -13,7 +13,11 @@ if (!function_exists('crear_horario')) {
             'hora_fin' => $hora_fin,
             'estado' => true,
             'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s')
+            'updated_at' => date('Y-m-d H:i:s'),
+            'usuario_id' => $usuario_id,
+            'duracion_minutos' => $duracion_minutos,
+            'tipo' => $tipo,
+            'orden' => $orden
         ];
 
         return $builder->insert($data);
@@ -30,7 +34,7 @@ if (!function_exists('convertir_a_minutos')) {
 
 if (!function_exists('asignar_horas_trabajo')) {
 
-    function asignar_horas_trabajo($usuario_id, $duracion, $actividad_id)
+    function asignar_horas_trabajo($usuario_id, $duracion, $actividad_id, $tipo = 'programado', $orden = null, $fecha_inicio_manual = '', $hora_inicio_manual = '')
     {
         $db = \Config\Database::connect();
 
@@ -46,11 +50,12 @@ if (!function_exists('asignar_horas_trabajo')) {
 
         $cumple = date('m-d', strtotime($usuario->fecha_nacimiento));
 
-        // 🔎 Buscar último horario registrado
+        // 🔎 Buscar último horario registrado (solo los activos)
         $horario = $db->table('horario_usuario')
             ->select('horario_usuario.*')
             ->join('actividades', 'actividades.id = horario_usuario.actividad_id')
             ->where('actividades.usuario_id', $usuario_id)
+            ->where('horario_usuario.estado', true)
             ->orderBy('horario_usuario.fecha', 'DESC')
             ->orderBy('horario_usuario.hora_fin', 'DESC')
             ->get()
@@ -58,17 +63,21 @@ if (!function_exists('asignar_horas_trabajo')) {
 
         $ahora = new DateTime();
 
-        if ($horario) {
+        if ($fecha_inicio_manual != '' && $hora_inicio_manual != '') {
+            $fechaActual = new DateTime($fecha_inicio_manual . ' ' . $hora_inicio_manual);
+        } else {
+            if ($horario) {
 
-            $ultimaFechaHora = new DateTime($horario->fecha . ' ' . $horario->hora_fin);
+                $ultimaFechaHora = new DateTime($horario->fecha . ' ' . $horario->hora_fin);
 
-            if ($ultimaFechaHora > $ahora) {
-                $fechaActual = clone $ultimaFechaHora;
+                if ($ultimaFechaHora > $ahora) {
+                    $fechaActual = clone $ultimaFechaHora;
+                } else {
+                    $fechaActual = clone $ahora;
+                }
             } else {
                 $fechaActual = clone $ahora;
             }
-        } else {
-            $fechaActual = clone $ahora;
         }
 
         // La duración ya viene en minutos
@@ -119,7 +128,9 @@ if (!function_exists('asignar_horas_trabajo')) {
 
                 if ($minutosDisponibles <= 0) continue;
 
-                $minutosAsignar = min($minutosRestantes, $minutosDisponibles);
+                $minutosAsignar = floor(min($minutosRestantes, $minutosDisponibles));
+
+                if ($minutosAsignar <= 0) continue;
 
                 $horaInicio = $fechaActual->format('H:i:s');
 
@@ -128,7 +139,7 @@ if (!function_exists('asignar_horas_trabajo')) {
                 $horaFin = $fechaActual->format('H:i:s');
 
                 // Guardar bloque
-                crear_horario($actividad_id, $fechaStr, $horaInicio, $horaFin);
+                crear_horario($actividad_id, $fechaStr, $horaInicio, $horaFin, $usuario_id, $minutosAsignar, $tipo, $orden);
 
                 $minutosRestantes -= $minutosAsignar;
 
@@ -188,5 +199,47 @@ if (!function_exists('verificar_tiempo_actividad')) {
             'minutos_disponibles' => $minutosDisponibles,
             'ultima_hora' => $horario->hora_fin
         ];
+    }
+}
+
+if (!function_exists('reorganizar_horarios_usuario')) {
+    function reorganizar_horarios_usuario($usuario_id)
+    {
+        $db = \Config\Database::connect();
+
+        // 1. Obtener todas las actividades pendientes (programadas) del usuario que no han sido terminadas
+        // Ordenadas por su fecha y hora de inicio actual (el orden original de planificación)
+        $actividadesPendientes = $db->table('horario_usuario')
+            ->select('actividad_id, SUM(duracion_minutos) as duracion_total')
+            ->where('usuario_id', $usuario_id)
+            ->where('tipo', 'programado')
+            ->where('estado', true)
+            ->groupBy('actividad_id')
+            ->orderBy('MIN(fecha)', 'ASC')
+            ->orderBy('MIN(hora_inicio)', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        if (empty($actividadesPendientes)) return true;
+
+        // 2. Eliminar (soft delete) los horarios programados actuales para re-planificarlos
+        $db->table('horario_usuario')
+            ->where('usuario_id', $usuario_id)
+            ->where('tipo', 'programado')
+            ->where('estado', true)
+            ->update(['estado' => false]);
+
+        // 3. Re-asignar cada actividad una por una usando la lógica de asignar_horas_trabajo
+        // Esto automáticamente tomará la nueva "última hora" (que será la de la tarea recién ejecutada)
+        foreach ($actividadesPendientes as $act) {
+            asignar_horas_trabajo(
+                $usuario_id,
+                $act['duracion_total'],
+                $act['actividad_id'],
+                'programado'
+            );
+        }
+
+        return true;
     }
 }

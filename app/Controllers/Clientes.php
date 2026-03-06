@@ -62,7 +62,7 @@ class Clientes extends ResourceController
             $prospecto = new ProspectosModel();
             $prospecto_persona = new ProspectoPersonaModel();
 
-            $data = $prospecto->find($id);
+            $data = $prospecto->query("SELECT p.*, u.rol_id as rol, a.tarea_id FROM prospectos p INNER JOIN usuarios u ON u.id = p.responsable_id INNER JOIN actividades a ON a.prospecto_id = p.id WHERE p.id = $id")->getRowArray();
 
             $personas = $prospecto_persona->query("SELECT p.nombres, p.apellidos, p.celular FROM prospecto_persona pp INNER JOIN personas p ON p.id = pp.persona_id WHERE pp.prospecto_id = $id")->getResultArray();
 
@@ -104,6 +104,8 @@ class Clientes extends ResourceController
                 $nombres = $data->nombres;
                 $apellidos = $data->apellidos;
                 $celular = $data->celular;
+                $fecha_inicio_manual = $data->fecha_inicio_manual;
+                $hora_inicio_manual = $data->hora_inicio_manual;
 
                 $data_tarea = $tarea->find($data->tarea_id);
                 $name_tarea = $data_tarea['nombre'];
@@ -131,7 +133,8 @@ class Clientes extends ResourceController
                     'estado_cliente' => 'Prospecto',
                     'prioridad' => $data->prioridad,
                     'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s')
+                    'updated_at' => date('Y-m-d H:i:s'),
+                    'responsable_id' => $data->responsable_id
                 ]);
 
                 $id_prospecto = $prospecto->getInsertID();
@@ -184,7 +187,8 @@ class Clientes extends ResourceController
                     "updated_at" => date('Y-m-d H:i:s'),
                     "color" => extraerColorAleatorio(),
                     "prioridad" => $data->prioridad,
-                    "estado_progreso" => "Pendiente"
+                    "estado_progreso" => "Pendiente",
+                    "tiempo_estimado_minutos" => $data_tarea['horas_estimadas']
                 ];
 
                 $actividad->insert($data_actividad);
@@ -203,7 +207,7 @@ class Clientes extends ResourceController
 
                 crear_notificacion($data->personal_id, $data->usuarioVentaId, 'Potencial Cliente', $name_tarea, 'info', 1);
 
-                asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad);
+                asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual);
 
                 $persona->db->transComplete();
 
