@@ -141,6 +141,18 @@ if (!function_exists('asignar_horas_trabajo')) {
                 // Guardar bloque
                 crear_horario($actividad_id, $fechaStr, $horaInicio, $horaFin, $usuario_id, $minutosAsignar, $tipo, $orden);
 
+                // ✨ NUEVO: Si es una tarea programada, guardar el inicio calculado en la tabla actividades
+                // Solo lo hacemos para el primer bloque de la tarea (cuando minutosRestantes == duración original)
+                // y solo si no estamos forzando una fecha manual (que ya debería estar guardada).
+                if ($tipo == 'programado' && (int)$minutosRestantes == (int)$duracion && empty($fecha_inicio_manual)) {
+                    $db->table('actividades')
+                        ->where('id', $actividad_id)
+                        ->update([
+                            'fecha_inicio' => $fechaStr,
+                            'hora_inicio'  => $horaInicio
+                        ]);
+                }
+
                 $minutosRestantes -= $minutosAsignar;
 
                 if ($minutosRestantes <= 0) break;
@@ -207,16 +219,22 @@ if (!function_exists('reorganizar_horarios_usuario')) {
     {
         $db = \Config\Database::connect();
 
-        // 1. Obtener todas las actividades pendientes (programadas) del usuario que no han sido terminadas
-        // Ordenadas por su fecha y hora de inicio actual (el orden original de planificación)
+        // 1. Obtener todas las actividades pendientes (programadas) del usuario
+        // Priorizamos la que esté en curso (!= 'Pendiente') y el resto por orden de llegada (secuencial)
         $actividadesPendientes = $db->table('horario_usuario')
-            ->select('actividad_id, SUM(duracion_minutos) as duracion_total')
-            ->where('usuario_id', $usuario_id)
-            ->where('tipo', 'programado')
-            ->where('estado', true)
-            ->groupBy('actividad_id')
-            ->orderBy('MIN(fecha)', 'ASC')
-            ->orderBy('MIN(hora_inicio)', 'ASC')
+            ->select('horario_usuario.actividad_id, SUM(horario_usuario.duracion_minutos) as duracion_total, actividades.estado_progreso, actividades.prioridad, actividades.created_at, actividades.fecha_inicio, actividades.hora_inicio, MIN(horario_usuario.fecha) as fecha_min, MIN(horario_usuario.hora_inicio) as hora_min')
+            ->join('actividades', 'actividades.id = horario_usuario.actividad_id')
+            ->where('horario_usuario.usuario_id', $usuario_id)
+            ->where('horario_usuario.tipo', 'programado')
+            ->where('horario_usuario.estado', true)
+            ->groupBy(['horario_usuario.actividad_id', 'actividades.estado_progreso', 'actividades.prioridad', 'actividades.created_at', 'actividades.fecha_inicio', 'actividades.hora_inicio'])
+            // El orden es:
+            // 1. Tareas que ya han empezado o están seleccionadas (no están en 'Pendiente')
+            // 2. Tareas por orden de creación (secuencial)
+            ->orderBy("CASE 
+                WHEN actividades.estado_progreso != 'Pendiente' THEN 1 
+                ELSE 2 END", 'ASC')
+            ->orderBy('actividades.created_at', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -229,17 +247,51 @@ if (!function_exists('reorganizar_horarios_usuario')) {
             ->where('estado', true)
             ->update(['estado' => false]);
 
-        // 3. Re-asignar cada actividad una por una usando la lógica de asignar_horas_trabajo
-        // Esto automáticamente tomará la nueva "última hora" (que será la de la tarea recién ejecutada)
+        // 3. Re-asignar cada actividad una por una. 
         foreach ($actividadesPendientes as $act) {
+            
+            $f_inicio = '';
+            $h_inicio = '';
+
+            // Si la tarea tiene un inicio manual guardado en la tabla actividades, lo usamos
+            if (!empty($act['fecha_inicio']) && !empty($act['hora_inicio'])) {
+                $f_inicio = $act['fecha_inicio'];
+                $h_inicio = $act['hora_inicio'];
+            } 
+            // Si no tiene manual pero ya está en curso (!= 'Pendiente'), debemos respetar donde estaba
+            elseif ($act['estado_progreso'] != 'Pendiente') {
+                $f_inicio = $act['fecha_min'];
+                $h_inicio = $act['hora_min'];
+            }
+
             asignar_horas_trabajo(
                 $usuario_id,
                 $act['duracion_total'],
                 $act['actividad_id'],
-                'programado'
+                'programado',
+                null,
+                $f_inicio,
+                $h_inicio
             );
         }
 
+
         return true;
+    }
+}
+if (!function_exists('obtener_ultimo_horario_usuario')) {
+    function obtener_ultimo_horario_usuario($usuario_id)
+    {
+        $db = \Config\Database::connect();
+
+        return $db->table('horario_usuario')
+            ->select('horario_usuario.*')
+            ->join('actividades', 'actividades.id = horario_usuario.actividad_id')
+            ->where('actividades.usuario_id', $usuario_id)
+            ->where('horario_usuario.estado', true)
+            ->orderBy('horario_usuario.fecha', 'DESC')
+            ->orderBy('horario_usuario.hora_fin', 'DESC')
+            ->get()
+            ->getRow();
     }
 }

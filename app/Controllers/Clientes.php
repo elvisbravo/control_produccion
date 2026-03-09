@@ -104,8 +104,8 @@ class Clientes extends ResourceController
                 $nombres = $data->nombres;
                 $apellidos = $data->apellidos;
                 $celular = $data->celular;
-                $fecha_inicio_manual = $data->fecha_inicio_manual;
-                $hora_inicio_manual = $data->hora_inicio_manual;
+                $fecha_inicio_manual = $data->fecha_inicio_manual ?? '';
+                $hora_inicio_manual = $data->hora_inicio_manual ?? '';
 
                 $data_tarea = $tarea->find($data->tarea_id);
                 $name_tarea = $data_tarea['nombre'];
@@ -158,6 +158,7 @@ class Clientes extends ResourceController
                 ];
 
                 $estados->insert($data_estado);
+                $id_historial_estado = $estados->getInsertID();
 
                 for ($i = 0; $i < count($nombres); $i++) {
                     $datos_persona = array(
@@ -191,7 +192,15 @@ class Clientes extends ResourceController
                     "tiempo_estimado_minutos" => $data_tarea['horas_estimadas']
                 ];
 
+                if (!empty($fecha_inicio_manual)) {
+                    $data_actividad["fecha_inicio"] = $fecha_inicio_manual;
+                }
+                if (!empty($hora_inicio_manual)) {
+                    $data_actividad["hora_inicio"] = $hora_inicio_manual;
+                }
+
                 $actividad->insert($data_actividad);
+
 
                 $id_actividad = $actividad->getInsertID();
 
@@ -204,10 +213,27 @@ class Clientes extends ResourceController
                 ];
 
                 $historial_actividad_estados->insert($data_historial_actividad_estados);
+                $id_historial_actividad_estado = $historial_actividad_estados->getInsertID();
 
                 crear_notificacion($data->personal_id, $data->usuarioVentaId, 'Potencial Cliente', $name_tarea, 'info', 1);
 
                 asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual);
+
+                reorganizar_horarios_usuario($data->personal_id);
+
+                // Sincronizar la fecha de inicio del historial con la fecha de inicio de la actividad proyectada
+                $datos_actividad_nueva = $actividad->find($id_actividad);
+                if ($datos_actividad_nueva && !empty($datos_actividad_nueva['fecha_inicio']) && !empty($datos_actividad_nueva['hora_inicio'])) {
+                    $fecha_inicio_real = $datos_actividad_nueva['fecha_inicio'] . ' ' . $datos_actividad_nueva['hora_inicio'];
+                    
+                    // Actualizar historial del prospecto
+                    $estados->update($id_historial_estado, ['fecha_inicio' => $fecha_inicio_real]);
+                    
+                    // Actualizar historial de la actividad
+                    $historial_actividad_estados->update($id_historial_actividad_estado, ['fecha_inicio' => $fecha_inicio_real]);
+                }
+
+
 
                 $persona->db->transComplete();
 

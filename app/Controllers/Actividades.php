@@ -33,7 +33,7 @@ class Actividades extends ResourceController
             $fecha_fin = $data->fecha_fin;
             $estado_progreso = $data->estado_progreso;
 
-            $datos = $actividad->query("SELECT a.id, a.prospecto_id, c.nombre AS carrera_nombre, p.fecha_contacto, a.prioridad, t.nombre, p.created_at, a.estado_progreso, per.nombres, per.apellidos, i.abreviatura as sigla, aeh.fecha_inicio, aeh.fecha_fin
+            $datos = $actividad->query("SELECT a.id, a.prospecto_id, c.nombre AS carrera_nombre, a.fecha_inicio as fecha_contacto, a.prioridad, t.nombre, p.created_at, a.estado_progreso, per.nombres, per.apellidos, i.abreviatura as sigla, aeh.fecha_inicio, aeh.fecha_fin
             FROM actividades a 
             INNER JOIN tarea t ON a.tarea_id = t.id
             INNER JOIN prospectos p ON a.prospecto_id = p.id
@@ -311,11 +311,13 @@ class Actividades extends ResourceController
                         ->where('actividad_id', $id_actividad)
                         ->where('tipo', 'programado')
                         ->update(['estado' => false]);
-
-                    // 3. Reorganizar el resto de tareas programadas del usuario
-                    reorganizar_horarios_usuario($data->usuario_id);
                 }
             }
+
+            // Recalcular el horario para todas las tareas pendientes del usuario
+            // Esto permite que si el usuario empieza una tarea "fuera de orden",
+            // el resto del horario se ajuste automáticamente a esa elección.
+            reorganizar_horarios_usuario($data->usuario_id);
 
             return $this->respond([
                 'status' => 200,
@@ -326,4 +328,20 @@ class Actividades extends ResourceController
             return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
         }
     }
+
+    public function getUltimoHorario($usuario_id)
+    {
+        try {
+            $data = obtener_ultimo_horario_usuario($usuario_id);
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Ultimo horario obtenido correctamente',
+                'result' => $data
+            ]);
+        } catch (\Exception $e) {
+            return $this->failServerError('Error interno del servidor: ' . $e->getMessage());
+        }
+    }
 }
+
