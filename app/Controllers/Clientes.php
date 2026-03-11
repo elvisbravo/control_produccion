@@ -11,6 +11,8 @@ use App\Models\PersonaModel;
 use App\Models\ProspectoPersonaModel;
 use App\Models\ProspectosModel;
 use App\Models\TareaModel;
+use App\Models\HorarioUsuarioModel;
+use App\Libraries\OpenAIService;
 use CodeIgniter\RESTful\ResourceController;
 
 class Clientes extends ResourceController
@@ -110,14 +112,32 @@ class Clientes extends ResourceController
                 $data_tarea = $tarea->find($data->tarea_id);
                 $name_tarea = $data_tarea['nombre'];
 
-                /*$verificar_tiempo = verificar_tiempo_actividad($data->personal_id, $data_tarea['horas_estimadas']);
+                // VALIDACIÓN CON IA (Opcional si viene de confirmar)
+                /*if (!isset($data->ignorar_ia) || $data->ignorar_ia === false) {
+                    $horarioModel = new HorarioUsuarioModel();
+                    $personal_id = $data->personal_id;
 
-                if ($verificar_tiempo['status'] == false) {
-                    return $this->respond([
-                        'status' => 400,
-                        'messages' => 'No se puede crear el prospecto, no hay tiempo disponible',
-                        'result' => $verificar_tiempo
-                    ]);
+                    // Obtener carga de hoy para este usuario
+                    $cargaHoy = $horarioModel->query("SELECT u.id as usuario_id, p.nombres, hu.hora_inicio, hu.hora_fin, hu.duracion_minutos
+                        FROM usuarios u 
+                        INNER JOIN personas p ON u.persona_id = p.id 
+                        LEFT JOIN horario_usuario hu ON u.id = hu.usuario_id 
+                        WHERE hu.fecha = CURRENT_DATE 
+                        AND hu.estado = true
+                        AND u.id = " . (int)$personal_id)->getResultArray();
+
+                    $iaService = new OpenAIService();
+                    $chequeo = $iaService->analizarPosibilidadTarea($cargaHoy, $data_tarea, $personal_id);
+
+                    if ($chequeo['status'] === 'success' && $chequeo['result']['posible'] === false) {
+                        return $this->respond([
+                            'status' => 409, // Conflict
+                            'tipo' => 'confirmacion_requerida',
+                            'message' => $chequeo['result']['mensaje'],
+                            'recomendacion' => $chequeo['result']['recomendacion'],
+                            'data_ia' => $chequeo['result']
+                        ]);
+                    }
                 }*/
 
                 $prospecto->insert([
@@ -225,10 +245,10 @@ class Clientes extends ResourceController
                 $datos_actividad_nueva = $actividad->find($id_actividad);
                 if ($datos_actividad_nueva && !empty($datos_actividad_nueva['fecha_inicio']) && !empty($datos_actividad_nueva['hora_inicio'])) {
                     $fecha_inicio_real = $datos_actividad_nueva['fecha_inicio'] . ' ' . $datos_actividad_nueva['hora_inicio'];
-                    
+
                     // Actualizar historial del prospecto
                     $estados->update($id_historial_estado, ['fecha_inicio' => $fecha_inicio_real]);
-                    
+
                     // Actualizar historial de la actividad
                     $historial_actividad_estados->update($id_historial_actividad_estado, ['fecha_inicio' => $fecha_inicio_real]);
                 }
