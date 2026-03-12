@@ -334,14 +334,25 @@ class Actividades extends ResourceController
         try {
             $data = obtener_ultimo_horario_usuario($usuario_id);
 
+            $fecha_actual = date('Y-m-d');
+
+            $mensaje = "Ultimo horario obtenido correctamente";
+
+            $result = $data->fecha . ' ' . $data->hora_fin;
+
+            if ($fecha_actual != $data->fecha) {
+                $mensaje = "Ya no hay tiempo para realizar esta actividad el dia de hoy por el momento";
+
+                $result = $data->fecha . ' ' . $data->hora_fin;
+            }
+
             return $this->respond([
                 'status' => 200,
-                'message' => 'Ultimo horario obtenido correctamente',
-                'result' => $data
+                'message' => $mensaje,
+                'result' => $result
             ]);
         } catch (\Exception $e) {
             return $this->failServerError('Error interno del servidor: ' . $e->getMessage());
         }
     }
 }
-
