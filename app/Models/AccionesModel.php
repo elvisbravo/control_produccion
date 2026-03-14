@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
+use CodeIgniter\Model;  
 
-class ModulosModel extends Model
+class AccionesModel extends Model
 {
-    protected $table      = 'modulos';
+    protected $table      = 'acciones';
     protected $primaryKey = 'id';
 
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'modulo', 'url', 'icono', 'orden', 'estado', 'idpadre'];
+    protected $allowedFields = ['id', 'nombre_accion', 'estado'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

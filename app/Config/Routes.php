@@ -65,13 +65,28 @@ $routes->get('/permisos', 'Permisos::index');
 $routes->get('/permisos/lista-roles', 'Permisos::listaRoles');
 $routes->post('/permisos/crear-rol', 'Permisos::createRol');
 $routes->get('/permisos/eliminar-rol/(:num)', 'Permisos::deleteRol/$1');
+$routes->get('/permisos/permisos-modulos/(:num)', 'Permisos::permisosModulos/$1');
 
 $routes->get('actividades/(:num)', 'Actividades::getActividades/$1');
 $routes->get('actividad/get-row/(:num)', 'Actividades::getActividadById/$1');
 $routes->post('actividad/update-link-drive', 'Actividades::updateLinkDrive');
 $routes->post('actividad/get-estados-actividades', 'Actividades::getEstadosActividades');
 $routes->post('actividad/update-estado', 'Actividades::updateEstado');
-$routes->get('actividad/get-ultimo-horario/(:num)', 'Actividades::getUltimoHorario/$1');
+$routes->get('actividad/get-ultimo-horario/(:num)/(:num)', 'Actividades::getUltimoHorario/$1/$2');
 
 $routes->get('ia/disponibilidad', 'IAController::disponibilidad');
 $routes->post('ia/verificar-tarea', 'IAController::verificarTarea');
+
+$routes->post('modulos/save', 'Modulos::createModulo');
+$routes->get('modulos/get-padres', 'Modulos::getModulosPadres');
+$routes->get('modulos/get-all', 'Modulos::getModulos');
+$routes->get('modulos/get-row/(:num)', 'Modulos::getModulo/$1');
+
+$routes->get('acciones/get-all', 'Acciones::getAcciones');
+$routes->post('acciones/save', 'Acciones::create');
+$routes->get('acciones/delete/(:num)', 'Acciones::delete/$1');
+$routes->post('acciones/save-config', 'Acciones::createAccionesModule');
+$routes->get('acciones/get-by-modulo/(:num)', 'Acciones::getAccionesModule/$1');
+
+
+
