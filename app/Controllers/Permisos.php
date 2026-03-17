@@ -202,21 +202,31 @@ class Permisos extends ResourceController
         try {
             $data = json_decode($this->request->getBody(true));
 
-            if (empty($data->rolId) || empty($data->moduloId) || empty($data->accionId)) {
+            /*if (!$data || !isset($data->rolId) || !isset($data->permisos)) {
                 return $this->failValidationErrors('Faltan datos obligatorios');
-            }
+            }*/
 
-            $rolId = $data->rolId;
-            $moduloId = $data->moduloId;
-            $accionId = $data->accionId;
+            $rolId = $data->perfil_id;
+            $permisos = $data->permisos;
 
             $permisosModel = new PermisosModel();
 
-            $permisosModel->insert([
-                'rol_id' => $rolId,
-                'modulo_id' => $moduloId,
-                'accion_id' => $accionId
-            ]);
+            // 1. Eliminar los permisos anteriores del rol para evitar duplicados al actualizar
+            $permisosModel->where('rol_id', $rolId)->delete();
+
+            // 2. Si hay permisos seleccionados (evita fallos si viene vacío), insertarlos
+            if (!empty($permisos) && (is_array($permisos) || is_object($permisos))) {
+                foreach ($permisos as $menu_id => $acciones) {
+                    foreach ($acciones as $permiso_id) {
+                        $nuevoPermiso = [
+                            'rol_id' => $rolId,
+                            'modulo_id' => $menu_id,
+                            'accion_id' => $permiso_id
+                        ];
+                        $permisosModel->insert($nuevoPermiso);
+                    }
+                }
+            }
 
             return $this->respondCreated([
                 'status' => 201,
@@ -225,6 +235,93 @@ class Permisos extends ResourceController
             ]);
         } catch (\Throwable $th) {
             return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function getPermisosByRol($rolId)
+    {
+        try {
+            $permisosModel = new PermisosModel();
+            $moduloModel = new ModulosModel();
+
+            // 1. Obtener los permisos del rol
+            $permisos = $permisosModel->where('rol_id', $rolId)->findAll();
+
+            if (empty($permisos)) {
+                return $this->respond([
+                    'status' => 200,
+                    'message' => 'Permisos obtenidos correctamente',
+                    'result' => []
+                ]);
+            }
+
+            // 2. Extraer los IDs únicos de los módulos a los que tiene acceso
+            $modulosIds = array_unique(array_column($permisos, 'modulo_id'));
+
+            // 3. Obtener los detalles de esos módulos
+            $modulosPermitidos = $moduloModel->whereIn('id', $modulosIds)
+                                             ->where('estado', true)
+                                             ->orderBy('orden', 'ASC')
+                                             ->findAll();
+
+            // 4. Asegurar que tenemos los módulos padres de cualquier submódulo permitido
+            $padresIds = [];
+            $modulosIdsAgregados = array_column($modulosPermitidos, 'id');
+
+            foreach ($modulosPermitidos as $mod) {
+                if ($mod['idpadre'] != 0 && $mod['idpadre'] != null) {
+                    // Si el padre de este submódulo aún no está en nuestra lista principal de IDs
+                    if (!in_array($mod['idpadre'], $modulosIdsAgregados)) {
+                        $padresIds[] = $mod['idpadre'];
+                    }
+                }
+            }
+
+            if (!empty($padresIds)) {
+                $padresIds = array_unique($padresIds);
+                $padresFaltantes = $moduloModel->whereIn('id', $padresIds)
+                                               ->where('estado', true)
+                                               ->findAll();
+                $modulosPermitidos = array_merge($modulosPermitidos, $padresFaltantes);
+                
+                // Re-ordenar por orden tras hacer un merge
+                usort($modulosPermitidos, function($a, $b) {
+                    return $a['orden'] <=> $b['orden'];
+                });
+            }
+
+            // 5. Estructurar en formato Padre -> Submódulos
+            $menuEstructurado = [];
+            $submodulosList = [];
+
+            // Separar padres e hijos
+            foreach ($modulosPermitidos as $mod) {
+                if ($mod['idpadre'] == 0 || $mod['idpadre'] == null) {
+                    $mod['submodulos'] = [];
+                    $menuEstructurado[$mod['id']] = $mod;
+                } else {
+                    $submodulosList[] = $mod;
+                }
+            }
+
+            // Asignar los submódulos a sus respectivos padres
+            foreach ($submodulosList as $sub) {
+                $padreId = $sub['idpadre'];
+                if (isset($menuEstructurado[$padreId])) {
+                    $menuEstructurado[$padreId]['submodulos'][] = $sub;
+                }
+            }
+
+            // Devolver como un arreglo indexado numéricamente para el frontend
+            $menuEstructurado = array_values($menuEstructurado);
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Permisos obtenidos correctamente',
+                'result' => $menuEstructurado
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
         }
     }
 }

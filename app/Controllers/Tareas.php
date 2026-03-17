@@ -273,4 +273,21 @@ class Tareas extends ResourceController
             return $this->failServerError('Error interno del servidor');
         }
     }
+
+    public function getTareasByRolAll($rol_id)
+    {
+        try {
+            $tarea = new TareaModel();
+
+            $tareas = $tarea->query("SELECT tarea.id, tarea.nombre, tareas_roles.prioridad FROM tarea INNER JOIN tareas_roles ON tareas_roles.tarea_id = tarea.id WHERE tareas_roles.rol_id = $rol_id AND tarea.estado = true ORDER BY tareas_roles.prioridad DESC")->getResultArray();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Tareas obtenidas correctamente',
+                'result' => $tareas
+            ]);
+        } catch (\Exception $e) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
 }

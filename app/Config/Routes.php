@@ -66,6 +66,8 @@ $routes->get('/permisos/lista-roles', 'Permisos::listaRoles');
 $routes->post('/permisos/crear-rol', 'Permisos::createRol');
 $routes->get('/permisos/eliminar-rol/(:num)', 'Permisos::deleteRol/$1');
 $routes->get('/permisos/permisos-modulos/(:num)', 'Permisos::permisosModulos/$1');
+$routes->post('/permisos/crear-permiso', 'Permisos::createPermiso');
+$routes->get('/permisos/get-permisos-by-rol/(:num)', 'Permisos::getPermisosByRol/$1');
 
 $routes->get('actividades/(:num)', 'Actividades::getActividades/$1');
 $routes->get('actividad/get-row/(:num)', 'Actividades::getActividadById/$1');

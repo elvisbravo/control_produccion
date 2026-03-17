@@ -13,7 +13,7 @@ class PermisosModel extends Model
 
     protected $returnType     = 'array';
 
-    protected $allowedFields = ['id', 'perfil_id', 'modulo_id', 'accion_id'];
+    protected $allowedFields = ['id', 'rol_id', 'modulo_id', 'accion_id'];
 
     protected $useTimestamps = false;
     protected $createdField  = 'created_at';

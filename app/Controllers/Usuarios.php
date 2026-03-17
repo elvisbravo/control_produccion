@@ -32,7 +32,7 @@ class Usuarios extends ResourceController
         try {
             $user = new UsuarioModel();
 
-            $datos = $user->query("SELECT usuarios.id, usuarios.usuario, personas.nombres, personas.apellidos, personas.celular, personas.direccion, roles.nombre as rol FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona_id INNER JOIN roles ON roles.id = usuarios.rol_id WHERE usuarios.estado = true AND usuarios.id != 1")->getResultArray();
+            $datos = $user->query("SELECT usuarios.id, usuarios.usuario, personas.nombres, personas.apellidos, personas.celular, personas.direccion, roles.nombre as rol, roles.id as rol_id FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona_id INNER JOIN roles ON roles.id = usuarios.rol_id WHERE usuarios.estado = true AND usuarios.id != 1")->getResultArray();
 
             return $this->respond([
                 'status' => 200,
