@@ -98,6 +98,7 @@ class Tareas extends ResourceController
             $data = json_decode($this->request->getBody(true));
 
             $id = $data->id;
+            $roles = json_decode($data->roles, true);
 
             $datos_tarea = array(
                 "nombre" => $data->nombre,
@@ -105,9 +106,6 @@ class Tareas extends ResourceController
                 "tipo_tarea" => $data->categoriaId,
                 "estado" => true
             );
-
-            $roles = $data->roles;
-            $prioridad = $data->prioridad;
 
             if ($id == 0) {
 
@@ -118,8 +116,9 @@ class Tareas extends ResourceController
                 for ($i = 0; $i < count($roles); $i++) {
                     $datos_tarea_roles = array(
                         "tarea_id" => $tarea_id,
-                        "rol_id" => $roles[$i],
-                        'prioridad' => $prioridad[$i]
+                        "rol_id" => $roles[$i]['id'],
+                        'prioridad' => $roles[$i]['prioridad'],
+                        'estado' => true
                     );
                     $tarea_roles->insert($datos_tarea_roles);
                 }
@@ -145,8 +144,8 @@ class Tareas extends ResourceController
                 for ($i = 0; $i < count($roles); $i++) {
                     $datos_tarea_roles = array(
                         "tarea_id" => $id,
-                        "rol_id" => $roles[$i],
-                        "prioridad" => $prioridad[$i]
+                        "rol_id" => $roles[$i]['id'],
+                        "prioridad" => $roles[$i]['prioridad']
                     );
                     $tarea_roles->insert($datos_tarea_roles);
                 }
@@ -163,9 +162,9 @@ class Tareas extends ResourceController
                     'result' => null
                 ]);
             }
-        } catch (\Throwable $th) {
+        } catch (\Exception $e) {
             $tarea->db->transRollback();
-            return $this->failServerError('Error interno del servidor');
+            return $this->failServerError('Error interno del servidor ' . $e->getMessage());
         }
     }
 
