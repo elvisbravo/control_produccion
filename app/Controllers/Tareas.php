@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\TareaModel;
 use App\Models\TareaRolesModel;
+use App\Models\TareasUsuarioModel;
 use App\Models\TipoTareaModel;
 use App\Models\UsuarioModel;
 use CodeIgniter\RESTful\ResourceController;
@@ -81,6 +82,30 @@ class Tareas extends ResourceController
                 'status' => 200,
                 'message' => 'Tareas obtenidas correctamente',
                 'result' => $result
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function getTareasByRolUsuario($rol_id, $usuario_id)
+    {
+        try {
+            $tarea = new TareaModel();
+            $tarea_usuario = new TareasUsuarioModel();
+
+            $tareas_usuario = $tarea_usuario->where('usuario_id', $usuario_id)->findAll();
+
+            if (count($tareas_usuario) > 0) {
+                $tareas = $tarea->query("SELECT tarea.id, tarea.nombre, tareas_usuarios.activo, '1' as prioridad FROM tarea INNER JOIN tareas_usuarios ON tareas_usuarios.tarea_id = tarea.id WHERE tareas_usuarios.usuario_id = $usuario_id AND tarea.estado = true ORDER BY tareas_usuarios.activo DESC")->getResultArray();
+            } else {
+                $tareas = $tarea->query("SELECT tarea.id, tarea.nombre, tareas_roles.prioridad, 'activo' as activo FROM tarea INNER JOIN tareas_roles ON tareas_roles.tarea_id = tarea.id WHERE tareas_roles.rol_id = $rol_id AND tarea.estado = true ORDER BY tareas_roles.prioridad DESC")->getResultArray();
+            }
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Tareas obtenidas correctamente',
+                'result' => $tareas
             ]);
         } catch (\Throwable $th) {
             return $this->failServerError('Error interno del servidor');
@@ -287,6 +312,54 @@ class Tareas extends ResourceController
             ]);
         } catch (\Exception $e) {
             return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function saveConfigTareasUsuario()
+    {
+        try {
+            $tarea_usuario = new TareasUsuarioModel();
+
+            $data = json_decode($this->request->getBody(true));
+
+            $tarea_usuario->db->transStart();
+
+            $tarea_usuario->where('usuario_id', $data->id_usuario)->delete();
+
+            $tareas = $data->tareas;
+
+
+            for ($i = 0; $i < count($tareas); $i++) {
+
+                if($tareas[$i]->estado == 'activo'){
+                    $estado = true;
+                }else{
+                    $estado = false;
+                }
+
+                $datos_tarea_usuario = array(
+                    "tarea_id" => $tareas[$i]->id,
+                    "usuario_id" => $data->id_usuario,
+                    "activo" => $estado,
+                    "created_at" => date('Y-m-d H:i:s'),
+                    "updated_at" => date('Y-m-d H:i:s')
+                );
+                $tarea_usuario->insert($datos_tarea_usuario);
+            }
+
+            $tarea_usuario->db->transComplete();
+
+            if ($tarea_usuario->db->transStatus() === false) {
+                throw new \Exception("Error al realizar la operación.");
+            }
+
+            return $this->respondCreated([
+                'status' => 201,
+                'message' => 'Configuración de tareas guardada correctamente',
+                'result' => null
+            ]);
+        } catch (\Exception $e) {
+            return $this->failServerError('Error interno del servidor ' . $e->getMessage());
         }
     }
 }

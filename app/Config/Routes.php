@@ -33,6 +33,8 @@ $routes->get('/tareas/delete/(:num)', 'Tareas::delete/$1');
 $routes->get('/tareas/get/(:num)', 'Tareas::getTareaRow/$1');
 $routes->get('/tareas/get-by-rol/(:num)', 'Tareas::getTareasByRol/$1');
 $routes->get('/tareas/get-by-rol-all/(:num)', 'Tareas::getTareasByRolAll/$1');
+$routes->get('/tareas/get-by-rol-usuario/(:num)/(:num)', 'Tareas::getTareasByRolUsuario/$1/$2');
+$routes->post('/tareas/save-config-usuario', 'Tareas::saveConfigTareasUsuario');
 
 // Instituciones
 $routes->get('/instituciones', 'Institucion::getInstituciones');
