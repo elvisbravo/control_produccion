@@ -111,6 +111,7 @@ class Clientes extends ResourceController
 
                 $data_tarea = $tarea->find($data->tarea_id);
                 $name_tarea = $data_tarea['nombre'];
+                $check_personal = $data->check_personal;
 
                 // VALIDACIÓN CON IA (Opcional si viene de confirmar)
                 /*if (!isset($data->ignorar_ia) || $data->ignorar_ia === false) {

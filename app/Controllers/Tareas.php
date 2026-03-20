@@ -99,7 +99,7 @@ class Tareas extends ResourceController
             if (count($tareas_usuario) > 0) {
                 $tareas = $tarea->query("SELECT tarea.id, tarea.nombre, tareas_usuarios.activo, '1' as prioridad FROM tarea INNER JOIN tareas_usuarios ON tareas_usuarios.tarea_id = tarea.id WHERE tareas_usuarios.usuario_id = $usuario_id AND tarea.estado = true ORDER BY tareas_usuarios.activo DESC")->getResultArray();
             } else {
-                $tareas = $tarea->query("SELECT tarea.id, tarea.nombre, tareas_roles.prioridad, 'activo' as activo FROM tarea INNER JOIN tareas_roles ON tareas_roles.tarea_id = tarea.id WHERE tareas_roles.rol_id = $rol_id AND tarea.estado = true ORDER BY tareas_roles.prioridad DESC")->getResultArray();
+                $tareas = $tarea->query("SELECT tarea.id, tarea.nombre, tareas_roles.prioridad, 't' as activo FROM tarea INNER JOIN tareas_roles ON tareas_roles.tarea_id = tarea.id WHERE tareas_roles.rol_id = $rol_id AND tarea.estado = true ORDER BY tareas_roles.prioridad DESC")->getResultArray();
             }
 
             return $this->respond([
