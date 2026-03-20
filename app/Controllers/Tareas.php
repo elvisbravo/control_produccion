@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\ResignacionesModel;
+use App\Models\ActividadesModel;
 use App\Models\TareaModel;
 use App\Models\TareaRolesModel;
 use App\Models\TareasUsuarioModel;
@@ -12,6 +14,13 @@ use CodeIgniter\RESTful\ResourceController;
 class Tareas extends ResourceController
 {
     protected $format = 'json';
+
+    public function __construct()
+    {
+        helper('notificacion_helper');
+        helper('horario_helper');
+        helper('base_helper');
+    }
 
     public function getTareas()
     {
@@ -360,6 +369,88 @@ class Tareas extends ResourceController
             ]);
         } catch (\Exception $e) {
             return $this->failServerError('Error interno del servidor ' . $e->getMessage());
+        }
+    }
+
+    public function getAsignacionesPendientes($usuario_id)
+    {
+        try {
+            $resignaciones = new ResignacionesModel();
+
+            $datos = $resignaciones->query("SELECT r.*, per.nombres, per.apellidos 
+            FROM public.resignaciones r 
+            LEFT JOIN public.usuarios u ON u.id = r.usuario_id_remitente
+            LEFT JOIN public.personas per ON per.id = u.persona_id
+            INNER JOIN public.prospectos p ON p.id = r.prospecto_id
+            WHERE r.usuario_id = $usuario_id")->getResultArray();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Asignaciones pendientes obtenidas correctamente',
+                'result' => $datos
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor');
+        }
+    }
+
+    public function updateAignacionUsuario()
+    {
+        try {
+            $data = json_decode($this->request->getBody(true));
+            $resignaciones = new ResignacionesModel();
+            $actividadesModel = new ActividadesModel();
+
+            // 1. Obtener los datos de la resignación para tener el contexto completo
+            $resignacion = $resignaciones->find($data->id);
+            if (!$resignacion) {
+                return $this->failNotFound('Asignación no encontrada');
+            }
+
+            $prospecto_id = $resignacion['prospecto_id'];
+            $remitente_id = $resignacion['usuario_id_remitente'];
+            $name_tarea = $resignacion['name_tarea'];
+
+            // 2. Obtener la actividad asociada al prospecto para saber su duración y ID
+            $actividad = $actividadesModel->where('prospecto_id', $prospecto_id)->first();
+            if (!$actividad) {
+                return $this->failNotFound('No se encontró una actividad para el prospecto reasignado');
+            }
+
+            $id_actividad = $actividad['id'];
+            $tiempo_estimado = $actividad['tiempo_estimado_minutos'];
+
+            // 3. Actualizar el responsable en la tabla de actividades
+            $actividadesModel->update($id_actividad, [
+                'usuario_id' => $data->usuario_reasignar_id,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+            // 4. Actualizar el estado de la resignación
+            $datos_resignaciones = array(
+                "usuario_reasignar_id" => $data->usuario_reasignar_id,
+                "estado" => 'reasignado',
+                "updated_at" => date('Y-m-d H:i:s'),
+                "fecha_reasignado" => date('Y-m-d H:i:s')
+            );
+            $resignaciones->update($data->id, $datos_resignaciones);
+
+            // 5. Notificar al nuevo asignado usando el remitente original
+            crear_notificacion($data->usuario_reasignar_id, $remitente_id, 'Potencial Cliente Reasignado', $name_tarea, 'info', 1);
+
+            // 6. Asignar horas de trabajo en el calendario del nuevo usuario
+            asignar_horas_trabajo($data->usuario_reasignar_id, $tiempo_estimado, $id_actividad, 'programado', null);
+
+            // 7. Reorganizar para consolidar el nuevo horario del usuario
+            reorganizar_horarios_usuario($data->usuario_reasignar_id);
+
+            return $this->respondCreated([
+                'status' => 201,
+                'message' => 'Asignación de tarea actualizada correctamente',
+                'result' => null
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
         }
     }
 }

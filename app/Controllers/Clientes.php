@@ -13,6 +13,7 @@ use App\Models\ProspectosModel;
 use App\Models\TareaModel;
 use App\Models\HorarioUsuarioModel;
 use App\Libraries\OpenAIService;
+use App\Models\ResignacionesModel;
 use CodeIgniter\RESTful\ResourceController;
 
 class Clientes extends ResourceController
@@ -113,34 +114,6 @@ class Clientes extends ResourceController
                 $name_tarea = $data_tarea['nombre'];
                 $check_personal = $data->check_personal;
 
-                // VALIDACIÓN CON IA (Opcional si viene de confirmar)
-                /*if (!isset($data->ignorar_ia) || $data->ignorar_ia === false) {
-                    $horarioModel = new HorarioUsuarioModel();
-                    $personal_id = $data->personal_id;
-
-                    // Obtener carga de hoy para este usuario
-                    $cargaHoy = $horarioModel->query("SELECT u.id as usuario_id, p.nombres, hu.hora_inicio, hu.hora_fin, hu.duracion_minutos
-                        FROM usuarios u 
-                        INNER JOIN personas p ON u.persona_id = p.id 
-                        LEFT JOIN horario_usuario hu ON u.id = hu.usuario_id 
-                        WHERE hu.fecha = CURRENT_DATE 
-                        AND hu.estado = true
-                        AND u.id = " . (int)$personal_id)->getResultArray();
-
-                    $iaService = new OpenAIService();
-                    $chequeo = $iaService->analizarPosibilidadTarea($cargaHoy, $data_tarea, $personal_id);
-
-                    if ($chequeo['status'] === 'success' && $chequeo['result']['posible'] === false) {
-                        return $this->respond([
-                            'status' => 409, // Conflict
-                            'tipo' => 'confirmacion_requerida',
-                            'message' => $chequeo['result']['mensaje'],
-                            'recomendacion' => $chequeo['result']['recomendacion'],
-                            'data_ia' => $chequeo['result']
-                        ]);
-                    }
-                }*/
-
                 $prospecto->insert([
                     'fecha_contacto' => date('Y-m-d'),
                     'origen_id' => 1,
@@ -238,9 +211,29 @@ class Clientes extends ResourceController
 
                 crear_notificacion($data->personal_id, $data->usuarioVentaId, 'Potencial Cliente', $name_tarea, 'info', 1);
 
-                asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual);
+                if($check_personal == "0") {
 
-                reorganizar_horarios_usuario($data->personal_id);
+                    asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual);
+
+                    reorganizar_horarios_usuario($data->personal_id);
+
+                } else {
+                    $resignaciones = new ResignacionesModel();
+
+                    $data_re = [
+                        'usuario_id' => $data->personal_id,
+                        'prospecto_id' => $id_prospecto,
+                        'usuario_reasignar_id' => 0,
+                        'usuario_id_remitente' => $data->usuarioVentaId,
+                        'estado' => 'pendiente',
+                        'name_tarea' => $name_tarea,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                        'fecha_reasignado' => null
+                    ];
+
+                    $resignaciones->insert($data_re);
+                }
 
                 // Sincronizar la fecha de inicio del historial con la fecha de inicio de la actividad proyectada
                 $datos_actividad_nueva = $actividad->find($id_actividad);
@@ -253,8 +246,6 @@ class Clientes extends ResourceController
                     // Actualizar historial de la actividad
                     $historial_actividad_estados->update($id_historial_actividad_estado, ['fecha_inicio' => $fecha_inicio_real]);
                 }
-
-
 
                 $persona->db->transComplete();
 
