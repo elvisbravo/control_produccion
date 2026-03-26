@@ -332,142 +332,113 @@ class Actividades extends ResourceController
     public function getUltimoHorario($usuario_id, $id_tarea)
     {
         try {
-            // ─── Consultar la tarea y obtener horas_estimadas → convertir a minutos ─
-            $tareaModel    = new TareaModel();
-            $tarea         = $tareaModel->find($id_tarea);
+            // ─── Consultar la tarea y obtener minutos estimados ────────────────
+            $tareaModel = new TareaModel();
+            $tarea      = $tareaModel->find($id_tarea);
 
             if (!$tarea) {
                 return $this->failNotFound("No se encontró la tarea con id $id_tarea.");
             }
 
-            $duracion_tarea = $tarea['horas_estimadas'];
+            $duracion_tarea = (int)$tarea['horas_estimadas'];
 
-            // Obtener el último registro de horario del usuario
-            $data = obtener_ultimo_horario_usuario($usuario_id);
-
-            $fecha_actual = date('Y-m-d');
-
-            // ─── Meses en español para formato legible ───────────────────────
+            // ─── Meses en español para formato legible ─────────────────────────
             $meses = [
-                1  => 'enero',
-                2  => 'febrero',
-                3  => 'marzo',
-                4  => 'abril',
-                5  => 'mayo',
-                6  => 'junio',
-                7  => 'julio',
-                8  => 'agosto',
-                9  => 'septiembre',
-                10 => 'octubre',
-                11 => 'noviembre',
-                12 => 'diciembre'
+                1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
+                5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
+                9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre'
             ];
 
-            // ─── Caso: el trabajador NO tiene horario registrado ─────────────
+            // Obtener el último registro de horario del usuario (el más futuro)
+            $data = obtener_ultimo_horario_usuario($usuario_id);
+            $ahora = new \DateTime();
+            $hoy_str = $ahora->format('Y-m-d');
+            $hoy_formateado = (int)$ahora->format('d') . ' de ' . $meses[(int)$ahora->format('m')] . ' de ' . $ahora->format('Y');
+
+            // ─── Caso: El trabajador NO tiene ningún horario registrado ────────
             if (!$data) {
-                return $this->respond([
-                    'status'  => 200,
-                    'tipo'    => 'sin_horario',
-                    'message' => 'El trabajador no tiene horario registrado.',
-                    'result'  => null
-                ]);
-            }
-
-            $result = $data->fecha . ' ' . $data->hora_fin;
-
-            // ─── Caso 1: La última fecha del horario NO es hoy ───────────────
-            if ($fecha_actual != $data->fecha) {
-
-                // Formatear la fecha del último horario de forma legible
-                $ts_ultimo         = strtotime($data->fecha);
-                $dia_ultimo        = (int)date('d', $ts_ultimo);
-                $mes_ultimo        = $meses[(int)date('m', $ts_ultimo)];
-                $anio_ultimo       = date('Y', $ts_ultimo);
-                $fecha_formateada  = "$dia_ultimo de $mes_ultimo de $anio_ultimo";
-
-                // Formatear fecha de hoy
-                $ts_hoy      = strtotime($fecha_actual);
-                $dia_hoy     = (int)date('d', $ts_hoy);
-                $mes_hoy     = $meses[(int)date('m', $ts_hoy)];
-                $anio_hoy    = date('Y', $ts_hoy);
-                $hoy_formateado = "$dia_hoy de $mes_hoy de $anio_hoy";
-
-                return $this->respond([
-                    'status'  => 200,
-                    'tipo'    => 'fuera_de_dia',
-                    'message' => "El trabajador no tiene tiempo disponible para la realización del trabajo para el día de hoy ($hoy_formateado). Su último horario registrado es el $fecha_formateada.",
-                    'result'  => $result
-                ]);
-            }
-
-            // ─── Caso 2: La última fecha del horario SÍ es hoy ──────────────
-            // Determinar el fin de la jornada laboral del día actual.
-            // Lunes–Viernes: 08:00–13:00 y 15:00–19:00  → fin = 19:00
-            // Sábado:        08:00–13:00                 → fin = 13:00
-            $dia_semana_hoy = (int)date('N'); // 1=Lun … 7=Dom
-            if ($dia_semana_hoy == 6) {
-                $hora_fin_jornada = '13:00:00';
+                $ultimo_fin = new \DateTime($hoy_str . ' 08:00:00');
             } else {
-                $hora_fin_jornada = '19:00:00';
+                $fecha_ultimo = $data->fecha;
+                $ultimo_dt = new \DateTime($fecha_ultimo);
+                $hoy_dt = new \DateTime($hoy_str);
+
+                // ─── Caso: El último horario es en el FUTURO ────────────────
+                if ($ultimo_dt > $hoy_dt) {
+                    $ts_ultimoRaw = strtotime($fecha_ultimo);
+                    $formateada_futuro = (int)date('d', $ts_ultimoRaw) . ' de ' . $meses[(int)date('m', $ts_ultimoRaw)] . ' de ' . date('Y', $ts_ultimoRaw);
+                    
+                    return $this->respond([
+                        'status'  => 200,
+                        'tipo'    => 'dia_futuro',
+                        'message' => "Usted no puede realizar hoy la actividad, su próximo horario programado es el $formateada_futuro a las " . date('H:i', strtotime($data->hora_inicio)),
+                        'result'  => $data->fecha . ' ' . $data->hora_fin
+                    ]);
+                }
+
+                // ─── Caso: El último horario fue en el PASADO ────────────────
+                if ($ultimo_dt < $hoy_dt) {
+                    $ultimo_fin = new \DateTime($hoy_str . ' 08:00:00');
+                } else {
+                    // El último horario es HOY
+                    $ultimo_fin = new \DateTime($data->fecha . ' ' . $data->hora_fin);
+                }
             }
 
-            $fin_jornada   = new \DateTime($fecha_actual . ' ' . $hora_fin_jornada);
-            $ultimo_fin    = new \DateTime($data->fecha . ' ' . $data->hora_fin);
+            // Aseguramos que el cursor de tiempo sea al menos 'ahora' si estamos calculando para hoy
+            if ($ultimo_fin < $ahora) {
+                $ultimo_fin = clone $ahora;
+            }
 
-            // Minutos disponibles desde el fin del último bloque hasta el fin de jornada
+            // ─── Calcular minutos disponibles RESTANTES para el día de HOY ─────
+            $dia_semana_hoy = (int)date('N'); // 1=Lun ... 7=Dom
+            $bloques = [];
+            if ($dia_semana_hoy >= 1 && $dia_semana_hoy <= 5) {
+                $bloques = [['08:00:00', '13:00:00'], ['15:00:00', '19:00:00']];
+            } elseif ($dia_semana_hoy == 6) {
+                $bloques = [['08:00:00', '13:00:00']];
+            } else {
+                // Domingo
+                $bloques = [];
+            }
+
             $minutos_disponibles = 0;
-            if ($ultimo_fin < $fin_jornada) {
-                $diff                = $ultimo_fin->diff($fin_jornada);
-                $minutos_disponibles = ($diff->h * 60) + $diff->i;
+            foreach ($bloques as $bloque) {
+                $inicio_bloque = new \DateTime($hoy_str . ' ' . $bloque[0]);
+                $fin_bloque    = new \DateTime($hoy_str . ' ' . $bloque[1]);
+                
+                if ($ultimo_fin < $fin_bloque) {
+                    $punto_inicio = ($ultimo_fin > $inicio_bloque) ? $ultimo_fin : $inicio_bloque;
+                    $diff = $punto_inicio->diff($fin_bloque);
+                    $minutos_disponibles += ($diff->h * 60) + $diff->i;
+                }
             }
 
-            // ── Sin duración de tarea → solo informar disponibilidad ─────────
-            if ($duracion_tarea <= 0) {
-                return $this->respond([
-                    'status'              => 200,
-                    'tipo'               => 'ok',
-                    'message'            => 'Tiempo disponible obtenido correctamente.',
-                    'minutos_disponibles' => $minutos_disponibles,
-                    'result'             => $result
-                ]);
-            }
-
-            // ── Hay suficiente tiempo → sin advertencia ──────────────────────
+            // ─── Respuesta final basada en la disponibilidad calculada ────────
             if ($minutos_disponibles >= $duracion_tarea) {
                 return $this->respond([
                     'status'              => 200,
-                    'tipo'               => 'ok',
-                    'message'            => 'Hay tiempo suficiente para realizar la actividad hoy.',
+                    'tipo'                => 'ok',
+                    'message'             => 'Sí puede tomar la tarea para hoy.',
                     'minutos_disponibles' => $minutos_disponibles,
-                    'result'             => $result
+                    'result'              => $ultimo_fin->format('Y-m-d H:i:s')
+                ]);
+            } else {
+                // Faltan minutos
+                $minutos_faltantes = $duracion_tarea - $minutos_disponibles;
+                $horas_faltantes   = floor($minutos_faltantes / 60);
+                $mins_faltantes    = $minutos_faltantes % 60;
+                $tiempo_legible    = ($horas_faltantes > 0) ? "{$horas_faltantes}h {$mins_faltantes}min" : "{$mins_faltantes} minutos";
+
+                return $this->respond([
+                    'status'              => 200,
+                    'tipo'                => 'tiempo_insuficiente',
+                    'message'             => "No hay más tiempo para terminar esa tarea el día de hoy ($hoy_formateado). Si guarda, se pasará al día siguiente.",
+                    'minutos_disponibles' => $minutos_disponibles,
+                    'minutos_faltantes'   => $minutos_faltantes,
+                    'result'              => $ultimo_fin->format('Y-m-d H:i:s')
                 ]);
             }
-
-            // ── Faltan minutos → advertencia con desbordamiento al día siguiente
-            $minutos_faltantes = $duracion_tarea - $minutos_disponibles;
-
-            // Formatear los minutos faltantes de forma legible (hh:mm)
-            $horas_faltantes   = floor($minutos_faltantes / 60);
-            $mins_faltantes    = $minutos_faltantes % 60;
-            $tiempo_legible    = ($horas_faltantes > 0)
-                ? "{$horas_faltantes}h {$mins_faltantes}min"
-                : "{$mins_faltantes} minutos";
-
-            // Formatear hoy legible
-            $ts_hoy2        = strtotime($fecha_actual);
-            $dia_hoy2       = (int)date('d', $ts_hoy2);
-            $mes_hoy2       = $meses[(int)date('m', $ts_hoy2)];
-            $anio_hoy2      = date('Y', $ts_hoy2);
-            $hoy_formateado2 = "$dia_hoy2 de $mes_hoy2 de $anio_hoy2";
-
-            return $this->respond([
-                'status'              => 200,
-                'tipo'               => 'tiempo_insuficiente',
-                'message'            => "Faltan $tiempo_legible para terminar dicha actividad el día de hoy ($hoy_formateado2). Si guarda, esos $tiempo_legible se pasarán al siguiente día hábil.",
-                'minutos_disponibles' => $minutos_disponibles,
-                'minutos_faltantes'  => $minutos_faltantes,
-                'result'             => $result
-            ]);
         } catch (\Exception $e) {
             return $this->failServerError('Error interno del servidor: ' . $e->getMessage());
         }

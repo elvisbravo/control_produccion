@@ -36,6 +36,7 @@ $routes->get('/tareas/get-by-rol-all/(:num)', 'Tareas::getTareasByRolAll/$1');
 $routes->get('/tareas/get-by-rol-usuario/(:num)/(:num)', 'Tareas::getTareasByRolUsuario/$1/$2');
 $routes->post('/tareas/save-config-usuario', 'Tareas::saveConfigTareasUsuario');
 
+$routes->get('/tareas/usuarios-by-tarea/(:num)', 'Tareas::getUsuariosByTarea/$1');
 $routes->get('/tareas/get-asignaciones-pendientes/(:num)', 'Tareas::getAsignacionesPendientes/$1');
 $routes->post('/tareas/update-asignacion-usuario', 'Tareas::updateAignacionUsuario');
 

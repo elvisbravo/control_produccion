@@ -121,6 +121,37 @@ class Tareas extends ResourceController
         }
     }
 
+    public function getUsuariosByTarea($tarea_id)
+    {
+        try {
+            $usuario = new UsuarioModel();
+
+            // Consulta simplificada para evitar bloqueos por filtros de estado o personalización
+            $query = "
+                SELECT DISTINCT u.id, p.nombres, p.apellidos
+                FROM usuarios u
+                INNER JOIN personas p ON p.id = u.persona_id
+                LEFT JOIN tareas_roles tr ON tr.rol_id = u.rol_id AND tr.tarea_id = $tarea_id
+                LEFT JOIN tareas_usuarios tu ON tu.usuario_id = u.id AND tu.tarea_id = $tarea_id
+                WHERE u.estado = true
+                AND (
+                    tr.tarea_id IS NOT NULL 
+                    OR 
+                    (tu.tarea_id IS NOT NULL AND tu.activo = true)
+                )";
+            
+            $users = $usuario->query($query)->getResultArray();
+
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Usuarios obtenidos correctamente',
+                'result' => $users
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
+        }
+    }
+
     public function create()
     {
         $tarea = new TareaModel();

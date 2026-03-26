@@ -54,12 +54,6 @@ class Usuarios extends ResourceController
         try {
             $data = json_decode($this->request->getBody(true));
 
-            return $this->respondCreated([
-                'status' => 201,
-                'message' => 'Usuario creado correctamente',
-                'result' => $data
-            ]);
-
             $id = $data->usuarioId;
             $correo = $data->correo;
             $numeroDocumento = $data->numeroDocumento;
