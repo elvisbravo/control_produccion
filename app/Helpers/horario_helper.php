@@ -124,36 +124,61 @@ if (!function_exists('asignar_horas_trabajo')) {
                     $fechaActual = clone $inicioBloque;
                 }
 
-                $minutosDisponibles = ($finBloque->getTimestamp() - $fechaActual->getTimestamp()) / 60;
+                // NUEVO: Loop interno para manejar huecos en el mismo bloque por bloqueos de tipo canje/manual
+                while ($fechaActual < $finBloque && $minutosRestantes > 0) {
 
-                if ($minutosDisponibles <= 0) continue;
+                    // 🚩 DETECTAR BLOQUEOS (Canjes, permisos, bloqueos manuales)
+                    $bloqueo = $db->table('horario_usuario')
+                        ->where('usuario_id', $usuario_id)
+                        ->where('fecha', $fechaStr)
+                        ->where('hora_inicio <', $finBloque->format('H:i:s'))
+                        ->where('hora_fin >', $fechaActual->format('H:i:s'))
+                        ->where('estado', true)
+                        ->where('tipo !=', 'programado') 
+                        ->orderBy('hora_inicio', 'ASC')
+                        ->get()
+                        ->getRow();
 
-                $minutosAsignar = floor(min($minutosRestantes, $minutosDisponibles));
+                    if ($bloqueo) {
+                        $inicioBloqueo = new DateTime("$fechaStr {$bloqueo->hora_inicio}");
+                        if ($fechaActual < $inicioBloqueo) {
+                            // Hay tiempo disponible antes de que empiece el bloqueo
+                            $minutosDisponibles = ($inicioBloqueo->getTimestamp() - $fechaActual->getTimestamp()) / 60;
+                        } else {
+                            // Estamos dentro o después de un bloqueo, saltar al final del bloqueo
+                            $finBloqueo = new DateTime("$fechaStr {$bloqueo->hora_fin}");
+                            $fechaActual = clone $finBloqueo;
+                            continue; // Re-evaluar este bloque desde el final del bloqueo
+                        }
+                    } else {
+                        // No hay bloqueos, tiempo disponible hasta el fin del bloque laboral
+                        $minutosDisponibles = ($finBloque->getTimestamp() - $fechaActual->getTimestamp()) / 60;
+                    }
 
-                if ($minutosAsignar <= 0) continue;
+                    if ($minutosDisponibles <= 0) break;
 
-                $horaInicio = $fechaActual->format('H:i:s');
+                    $minutosAsignar = floor(min($minutosRestantes, $minutosDisponibles));
 
-                $fechaActual->modify("+{$minutosAsignar} minutes");
+                    if ($minutosAsignar <= 0) break;
 
-                $horaFin = $fechaActual->format('H:i:s');
+                    $horaInicio = $fechaActual->format('H:i:s');
+                    $fechaActual->modify("+{$minutosAsignar} minutes");
+                    $horaFin = $fechaActual->format('H:i:s');
 
-                // Guardar bloque
-                crear_horario($actividad_id, $fechaStr, $horaInicio, $horaFin, $usuario_id, $minutosAsignar, $tipo, $orden);
+                    // Guardar bloque de trabajo
+                    crear_horario($actividad_id, $fechaStr, $horaInicio, $horaFin, $usuario_id, $minutosAsignar, $tipo, $orden);
 
-                // ✨ NUEVO: Si es una tarea programada, guardar el inicio calculado en la tabla actividades
-                // Solo lo hacemos para el primer bloque de la tarea (cuando minutosRestantes == duración original)
-                // y solo si no estamos forzando una fecha manual (que ya debería estar guardada).
-                if ($tipo == 'programado' && (int)$minutosRestantes == (int)$duracion && empty($fecha_inicio_manual)) {
-                    $db->table('actividades')
-                        ->where('id', $actividad_id)
-                        ->update([
-                            'fecha_inicio' => $fechaStr,
-                            'hora_inicio'  => $horaInicio
-                        ]);
+                    if ($tipo == 'programado' && (int)$minutosRestantes == (int)$duracion && empty($fecha_inicio_manual)) {
+                        $db->table('actividades')
+                            ->where('id', $actividad_id)
+                            ->update([
+                                'fecha_inicio' => $fechaStr,
+                                'hora_inicio'  => $horaInicio
+                            ]);
+                    }
+
+                    $minutosRestantes -= $minutosAsignar;
                 }
-
-                $minutosRestantes -= $minutosAsignar;
 
                 if ($minutosRestantes <= 0) break;
             }

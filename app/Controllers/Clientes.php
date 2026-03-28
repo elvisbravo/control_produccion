@@ -33,14 +33,16 @@ class Clientes extends ResourceController
             $prospecto = new ProspectosModel();
             $prospectoPersona = new ProspectoPersonaModel();
 
-            $datos = $prospecto->query("SELECT p.id, TO_CHAR(p.fecha_contacto, 'DD-MM-YYYY') AS fecha_contacto, TO_CHAR(p.fecha_entrega, 'DD-MM-YYYY') AS fecha_entrega, p.contenido, p.estado, a.estado_progreso, o.nombre as origen, na.nombre as nivel_academico, c.nombre as carrera, i.nombre as institucion, i.abreviatura 
+            $datos = $prospecto->query("SELECT p.id, TO_CHAR(p.fecha_contacto, 'DD-MM-YYYY') AS fecha_contacto, TO_CHAR(p.fecha_entrega, 'DD-MM-YYYY') AS fecha_entrega, p.contenido, p.estado, a.estado_progreso, a.tipo_horario, a.modalidad_horario, o.nombre as origen, na.nombre as nivel_academico, c.nombre as carrera, i.nombre as institucion, i.abreviatura, per.nombres, per.apellidos, a.usuario_id 
             FROM prospectos p 
             LEFT JOIN origen o ON o.id = p.origen_id 
             LEFT JOIN nivel_academico na ON na.id = p.nivel_academico_id 
             LEFT JOIN carreras c ON c.id = p.carrera_id 
             LEFT JOIN institucion i ON i.id = c.institucion_id
             INNER JOIN actividades a ON a.prospecto_id = p.id
-            WHERE p.estado = true")->getResultArray();
+            INNER JOIN usuarios u ON u.id = a.usuario_id
+            INNER JOIN personas per ON per.id = u.persona_id
+            WHERE p.estado = true ORDER BY p.id DESC")->getResultArray();
 
             foreach ($datos as $key => $value) {
                 $id = $value['id'];
@@ -65,7 +67,7 @@ class Clientes extends ResourceController
             $prospecto = new ProspectosModel();
             $prospecto_persona = new ProspectoPersonaModel();
 
-            $data = $prospecto->query("SELECT p.*, u.rol_id as rol, a.tarea_id FROM prospectos p INNER JOIN usuarios u ON u.id = p.responsable_id INNER JOIN actividades a ON a.prospecto_id = p.id WHERE p.id = $id")->getRowArray();
+            $data = $prospecto->query("SELECT p.*, u.rol_id as rol, a.tarea_id, a.tipo_horario, a.modalidad_horario FROM prospectos p INNER JOIN usuarios u ON u.id = p.responsable_id INNER JOIN actividades a ON a.prospecto_id = p.id WHERE p.id = $id")->getRowArray();
 
             $personas = $prospecto_persona->query("SELECT p.nombres, p.apellidos, p.celular FROM prospecto_persona pp INNER JOIN personas p ON p.id = pp.persona_id WHERE pp.prospecto_id = $id")->getResultArray();
 
@@ -98,7 +100,7 @@ class Clientes extends ResourceController
         $persona->db->transStart();
 
         try {
-            $data = json_decode($this->request->getBody(true));
+            $data = json_decode($this->request->getBody());
 
             $id = $data->id;
 
@@ -113,6 +115,18 @@ class Clientes extends ResourceController
                 $data_tarea = $tarea->find($data->tarea_id);
                 $name_tarea = $data_tarea['nombre'];
                 $check_personal = $data->check_personal;
+
+                $tipo_jornada = $data->tipo_jornada;
+
+                // ⌚ Cálculo de fin de canje si aplica (si hay fecha y hora de inicio)
+                $hora_fin_canje = null;
+                if (!empty($data->fecha_canje) && !empty($data->hora_inicio_canje)) {
+                    $duracion_min = (int)$data_tarea['horas_estimadas'];
+                    $inicio_c = new \DateTime($data->fecha_canje . ' ' . $data->hora_inicio_canje);
+                    $fin_c = clone $inicio_c;
+                    $fin_c->modify("+{$duracion_min} minutes");
+                    $hora_fin_canje = $fin_c->format('H:i:s');
+                }
 
                 $prospecto->insert([
                     'fecha_contacto' => date('Y-m-d'),
@@ -183,7 +197,12 @@ class Clientes extends ResourceController
                     "color" => extraerColorAleatorio(),
                     "prioridad" => $data->prioridad,
                     "estado_progreso" => "Pendiente",
-                    "tiempo_estimado_minutos" => $data_tarea['horas_estimadas']
+                    "tiempo_estimado_minutos" => $data_tarea['horas_estimadas'],
+                    "tipo_horario" => $tipo_jornada ?? 'Laboral',
+                    "modalidad_horario" => $data->modalidad_horario ?? null,
+                    "fecha_canje" => (!empty($data->fecha_canje)) ? $data->fecha_canje : null,
+                    "hora_inicio_canje" => (!empty($data->hora_inicio_canje)) ? $data->hora_inicio_canje : null,
+                    "hora_fin_canje" => $hora_fin_canje
                 ];
 
                 if (!empty($fecha_inicio_manual)) {
@@ -198,6 +217,20 @@ class Clientes extends ResourceController
 
                 $id_actividad = $actividad->getInsertID();
 
+                // 🗓️ Bloqueo de agenda si se especificó fecha/hora de canje (independiente de la modalidad)
+                if (!empty($data->fecha_canje) && !empty($data->hora_inicio_canje)) {
+                    
+                    crear_horario(
+                        $id_actividad, 
+                        $data->fecha_canje, 
+                        $data->hora_inicio_canje, 
+                        $hora_fin_canje, 
+                        $data->personal_id, 
+                        (int)$data_tarea['horas_estimadas'], 
+                        'canje'
+                    );
+                }
+
                 $data_historial_actividad_estados = [
                     "actividad_id" => $id_actividad,
                     "estado_progreso" => "Pendiente",
@@ -211,13 +244,14 @@ class Clientes extends ResourceController
 
                 crear_notificacion($data->personal_id, $data->usuarioVentaId, 'Potencial Cliente', $name_tarea, 'info', 1);
 
-                if($check_personal == "0") {
+                // 🚀 Solo asignamos horas de trabajo si la jornada es "Laboral" y el usuario ya está confirmado
+                if($check_personal == "0" && $tipo_jornada == 'Laboral') {
 
                     asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual);
 
                     reorganizar_horarios_usuario($data->personal_id);
 
-                } else {
+                } elseif($check_personal == "1") {
                     $resignaciones = new ResignacionesModel();
 
                     $data_re = [

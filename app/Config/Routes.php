@@ -97,5 +97,7 @@ $routes->get('acciones/delete/(:num)', 'Acciones::delete/$1');
 $routes->post('acciones/save-config', 'Acciones::createAccionesModule');
 $routes->get('acciones/get-by-modulo/(:num)', 'Acciones::getAccionesModule/$1');
 
+$routes->get('actividad/fuera-horario-laboral', 'Actividades::fueraHorarioLaboral');
+
 
 

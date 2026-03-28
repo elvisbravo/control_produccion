@@ -443,4 +443,19 @@ class Actividades extends ResourceController
             return $this->failServerError('Error interno del servidor: ' . $e->getMessage());
         }
     }
+
+    public function fueraHorarioLaboral()
+    {
+        try {
+            $data = [];
+           
+            return $this->respond([
+                'status' => 200,
+                'message' => 'Estado actualizado correctamente',
+                'result' => null
+            ]);
+        } catch (\Throwable $th) {
+            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
+        }
+    }
 }
