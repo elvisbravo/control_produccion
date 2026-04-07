@@ -249,10 +249,10 @@ class Permisos extends ResourceController
 
             if (empty($permisos)) {
                 return $this->respond([
-                    'status' => 200,
+                    'status' => 'success',
                     'message' => 'Permisos obtenidos correctamente',
-                    'result' => []
-                ]);
+                    'data' => []
+                ], 200);
             }
 
             // 2. Extraer los IDs únicos de los módulos a los que tiene acceso
@@ -316,12 +316,16 @@ class Permisos extends ResourceController
             $menuEstructurado = array_values($menuEstructurado);
 
             return $this->respond([
-                'status' => 200,
+                'status' => 'success',
                 'message' => 'Permisos obtenidos correctamente',
-                'result' => $menuEstructurado
-            ]);
+                'data' => $menuEstructurado
+            ], 200);
         } catch (\Throwable $th) {
-            return $this->failServerError('Error interno del servidor: ' . $th->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error interno del servidor: ' . $th->getMessage(),
+                'data' => []
+            ], 500);
         }
     }
 }

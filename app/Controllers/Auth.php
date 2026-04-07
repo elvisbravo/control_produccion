@@ -15,7 +15,11 @@ class Auth extends ResourceController
             $data = json_decode($this->request->getBody(true));
 
             if (empty($data->username) || empty($data->password)) {
-                return $this->failValidationErrors('Faltan datos obligatorios');
+                return $this->respond([
+                    'status' => 'error',
+                    'mensaje' => 'Faltan datos obligatorios',
+                    'data' => []
+                ], 401);
             }
 
             $usuario = new UsuarioModel();
@@ -23,16 +27,24 @@ class Auth extends ResourceController
             $usuarios = $usuario->query("SELECT usuarios.id, usuarios.usuario, personas.nombres, personas.apellidos, roles.id AS rol_id, roles.nombre AS rol FROM usuarios INNER JOIN roles ON usuarios.rol_id = roles.id INNER JOIN personas ON usuarios.persona_id = personas.id WHERE usuarios.estado = true and usuarios.usuario = ? AND usuarios.clave = ?", [$data->username, $data->password])->getRow();
 
             if (empty($usuarios)) {
-                return $this->failNotFound('Usuario o contraseña incorrectos');
+                return $this->respond([
+                    'status' => 'error',
+                    'mensaje' => 'Usuario o contraseña incorrectos',
+                    'data' => []
+                ], 401);
             }
 
             return $this->respond([
-                'status' => 200,
+                'status' => 'success',
                 'mensaje' => 'Login exitoso',
-                'result' => $usuarios
-            ]);
+                'data' => $usuarios
+            ], 200);
         } catch (\Exception $e) {
-            return $this->failServerError('Error interno del servidor');
+            return $this->respond([
+                'status' => 'error',
+                'mensaje' => 'Error interno del servidor ' . $e->getMessage(),
+                'data' => []
+            ], 500);
         }
     }
 

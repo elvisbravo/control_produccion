@@ -35,12 +35,16 @@ class Usuarios extends ResourceController
             $datos = $user->query("SELECT usuarios.id, usuarios.usuario, personas.nombres, personas.apellidos, personas.celular, personas.direccion, roles.nombre as rol, roles.id as rol_id FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona_id INNER JOIN roles ON roles.id = usuarios.rol_id WHERE usuarios.estado = true AND usuarios.id != 1")->getResultArray();
 
             return $this->respond([
-                'status' => 200,
+                'status' => 'success',
                 'message' => 'Usuarios obtenidos correctamente',
-                'result' => $datos
-            ]);
+                'data' => $datos
+            ], 200);
         } catch (\Throwable $th) {
-            return $this->failServerError('Error interno del servidor');
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error interno del servidor: ' . $th->getMessage(),
+                'data' => []
+            ], 500);
         }
     }
 

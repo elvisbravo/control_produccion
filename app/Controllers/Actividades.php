@@ -436,7 +436,8 @@ class Actividades extends ResourceController
                     'message'             => "No hay más tiempo para terminar esa tarea el día de hoy ($hoy_formateado). Si guarda, se pasará al día siguiente.",
                     'minutos_disponibles' => $minutos_disponibles,
                     'minutos_faltantes'   => $minutos_faltantes,
-                    'result'              => $ultimo_fin->format('Y-m-d H:i:s')
+                    'result'              => $ultimo_fin->format('Y-m-d H:i:s'),
+                    'minutos' => $mins_faltantes
                 ]);
             }
         } catch (\Exception $e) {
