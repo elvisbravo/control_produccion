@@ -66,6 +66,7 @@ $routes->get('origen/delete/(:num)', 'Origen::delete/$1');
 // horario
 $routes->get('horario/get-by-id/(:num)', 'Horario::getHorarioById/$1');
 $routes->get('horario/get-usuario/(:num)', 'Horario::getHorarioUsuario/$1');
+$routes->get('horario/get-filtro/(:any)/(:any)/(:num)', 'Horario::getHorarioFiltro/$1/$2/$3');
 
 // Permisos
 $routes->get('/permisos', 'Permisos::index');
@@ -90,7 +91,7 @@ $routes->post('modulos/save', 'Modulos::createModulo');
 $routes->get('modulos/get-padres', 'Modulos::getModulosPadres');
 $routes->get('modulos/get-all', 'Modulos::getModulos');
 $routes->get('modulos/get-row/(:num)', 'Modulos::getModulo/$1');
-$routes->get('modulo/delete/(:num)', 'Modulos::deleteModulo/$1');
+$routes->get('modulos/delete/(:num)', 'Modulos::deleteModulo/$1');
 
 $routes->get('acciones/get-all', 'Acciones::getAcciones');
 $routes->post('acciones/save', 'Acciones::create');
@@ -99,6 +100,10 @@ $routes->post('acciones/save-config', 'Acciones::createAccionesModule');
 $routes->get('acciones/get-by-modulo/(:num)', 'Acciones::getAccionesModule/$1');
 
 $routes->get('actividad/fuera-horario-laboral', 'Actividades::fueraHorarioLaboral');
+
+$routes->get('dias/get-all', 'Dia::getDias');
+$routes->post('dias/create-asignacion', 'Dia::createAsignacion');
+$routes->get('dias/get-asignaciones-usuario/(:num)', 'Dia::getAsignacionesUsuario/$1');
 
 
 

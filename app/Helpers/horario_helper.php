@@ -1,7 +1,7 @@
 <?php
 
 if (!function_exists('crear_horario')) {
-    function crear_horario($actividad_id, $fecha, $hora_inicio, $hora_fin, $usuario_id, $duracion_minutos, $tipo, $orden = null)
+    function crear_horario($actividad_id, $fecha, $hora_inicio, $hora_fin, $usuario_id, $duracion_minutos, $tipo, $orden = null, $categoria = 'PRODUCCION')
     {
         $db = \Config\Database::connect();
         $builder = $db->table('horario_usuario');
@@ -17,7 +17,8 @@ if (!function_exists('crear_horario')) {
             'usuario_id' => $usuario_id,
             'duracion_minutos' => $duracion_minutos,
             'tipo' => $tipo,
-            'orden' => $orden
+            'orden' => $orden,
+            'categoria' => $categoria
         ];
 
         return $builder->insert($data);
@@ -34,7 +35,7 @@ if (!function_exists('convertir_a_minutos')) {
 
 if (!function_exists('asignar_horas_trabajo')) {
 
-    function asignar_horas_trabajo($usuario_id, $duracion, $actividad_id, $tipo = 'programado', $orden = null, $fecha_inicio_manual = '', $hora_inicio_manual = '')
+    function asignar_horas_trabajo($usuario_id, $duracion, $actividad_id, $tipo = 'programado', $orden = null, $fecha_inicio_manual = '', $hora_inicio_manual = '', $categoria = 'PRODUCCION')
     {
         $db = \Config\Database::connect();
 
@@ -166,7 +167,7 @@ if (!function_exists('asignar_horas_trabajo')) {
                     $horaFin = $fechaActual->format('H:i:s');
 
                     // Guardar bloque de trabajo
-                    crear_horario($actividad_id, $fechaStr, $horaInicio, $horaFin, $usuario_id, $minutosAsignar, $tipo, $orden);
+                    crear_horario($actividad_id, $fechaStr, $horaInicio, $horaFin, $usuario_id, $minutosAsignar, $tipo, $orden, $categoria);
 
                     if ($tipo == 'programado' && (int)$minutosRestantes == (int)$duracion && empty($fecha_inicio_manual)) {
                         $db->table('actividades')
@@ -247,12 +248,12 @@ if (!function_exists('reorganizar_horarios_usuario')) {
         // 1. Obtener todas las actividades pendientes (programadas) del usuario
         // Priorizamos la que esté en curso (!= 'Pendiente') y el resto por orden de llegada (secuencial)
         $actividadesPendientes = $db->table('horario_usuario')
-            ->select('horario_usuario.actividad_id, SUM(horario_usuario.duracion_minutos) as duracion_total, actividades.estado_progreso, actividades.prioridad, actividades.created_at, actividades.fecha_inicio, actividades.hora_inicio, MIN(horario_usuario.fecha) as fecha_min, MIN(horario_usuario.hora_inicio) as hora_min')
+            ->select('horario_usuario.actividad_id, SUM(horario_usuario.duracion_minutos) as duracion_total, actividades.estado_progreso, actividades.prioridad, actividades.created_at, actividades.fecha_inicio, actividades.hora_inicio, actividades.prospecto_id, MIN(horario_usuario.fecha) as fecha_min, MIN(horario_usuario.hora_inicio) as hora_min')
             ->join('actividades', 'actividades.id = horario_usuario.actividad_id')
             ->where('horario_usuario.usuario_id', $usuario_id)
             ->where('horario_usuario.tipo', 'programado')
             ->where('horario_usuario.estado', true)
-            ->groupBy(['horario_usuario.actividad_id', 'actividades.estado_progreso', 'actividades.prioridad', 'actividades.created_at', 'actividades.fecha_inicio', 'actividades.hora_inicio'])
+            ->groupBy(['horario_usuario.actividad_id', 'actividades.estado_progreso', 'actividades.prioridad', 'actividades.created_at', 'actividades.fecha_inicio', 'actividades.hora_inicio', 'actividades.prospecto_id'])
             // El orden es:
             // 1. Tareas que ya han empezado o están seleccionadas (no están en 'Pendiente')
             // 2. Tareas por orden de creación (secuencial)
@@ -296,7 +297,8 @@ if (!function_exists('reorganizar_horarios_usuario')) {
                 'programado',
                 null,
                 $f_inicio,
-                $h_inicio
+                $h_inicio,
+                !empty($act['prospecto_id']) ? 'VENTAS' : 'PRODUCCION'
             );
         }
 

@@ -60,6 +60,36 @@ class Horario extends ResourceController
         }
     }
 
+    public function getHorarioFiltro($categoria, $fecha, $usuario_id)
+    {
+        try {
+            $horario = new HorarioUsuarioModel();
+
+            $datos = $horario->db->table('horario_usuario hu')
+                ->select('hu.id, t.nombre as title, hu.fecha, hu.hora_inicio, hu.hora_fin, concat(hu.fecha, \' \', hu.hora_inicio) as start, concat(hu.fecha, \' \', hu.hora_fin) as end, hu.tipo, hu.duracion_minutos, act.color, hu.actividad_id, hu.categoria')
+                ->join('actividades act', 'hu.actividad_id = act.id')
+                ->join('tarea t', 'act.tarea_id = t.id')
+                ->where('hu.usuario_id', $usuario_id)
+                ->where('hu.categoria', $categoria)
+                ->where('hu.fecha', $fecha)
+                ->where('hu.estado', true)
+                ->get()
+                ->getResultArray();
+
+            return $this->respond([
+                'status' => 'success',
+                'message' => 'Horario filtrado obtenido correctamente',
+                'data' => $datos
+            ], 200);
+        } catch (\Throwable $th) {
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error interno del servidor: ' . $th->getMessage(),
+                'data' => null
+            ], 500);
+        }
+    }
+
     public function create()
     {
         $carrera = new CarreraModel();

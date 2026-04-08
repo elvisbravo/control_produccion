@@ -470,7 +470,8 @@ class Tareas extends ResourceController
             crear_notificacion($data->usuario_reasignar_id, $remitente_id, 'Potencial Cliente Reasignado', $name_tarea, 'info', 1);
 
             // 6. Asignar horas de trabajo en el calendario del nuevo usuario
-            asignar_horas_trabajo($data->usuario_reasignar_id, $tiempo_estimado, $id_actividad, 'programado', null);
+            $categoria = !empty($actividad['prospecto_id']) ? 'VENTAS' : 'PRODUCCION';
+            asignar_horas_trabajo($data->usuario_reasignar_id, $tiempo_estimado, $id_actividad, 'programado', null, '', '', $categoria);
 
             // 7. Reorganizar para consolidar el nuevo horario del usuario
             reorganizar_horarios_usuario($data->usuario_reasignar_id);

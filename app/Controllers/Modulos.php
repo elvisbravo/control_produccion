@@ -86,12 +86,16 @@ class Modulos extends ResourceController
             ]);
 
             return $this->respond([
-                'status' => 200,
+                'status' => 'success',
                 'message' => 'Modulo eliminado correctamente',
-                'result' => null
-            ]);
-        } catch (\Throwable $th) {
-            return $this->failServerError('Error interno del servidor');
+                'data' => null
+            ], 200);
+        } catch (\Exception $e) {
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error interno del servidor: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
         }
     }
 

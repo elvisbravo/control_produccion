@@ -142,7 +142,8 @@ class Clientes extends ResourceController
                     'prioridad' => $data->prioridad,
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
-                    'responsable_id' => $data->responsable_id
+                    'responsable_id' => $data->responsable_id,
+                    'titulo_prospecto' => $data->titulo_prospecto
                 ]);
 
                 $id_prospecto = $prospecto->getInsertID();
@@ -244,10 +245,10 @@ class Clientes extends ResourceController
 
                 crear_notificacion($data->personal_id, $data->usuarioVentaId, 'Potencial Cliente', $name_tarea, 'info', 1);
 
-                // 🚀 Solo asignamos horas de trabajo si la jornada es "Laboral" y el usuario ya está confirmado
-                if($check_personal == "0" && $tipo_jornada == 'Laboral') {
+                // 🚀 Asignamos horas de trabajo si es jornada Laboral O si se ha especificado un inicio manual
+                if(($check_personal == "0" && $tipo_jornada == 'Laboral') || (!empty($fecha_inicio_manual) && !empty($hora_inicio_manual))) {
 
-                    asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual);
+                    asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual, 'VENTAS');
 
                     reorganizar_horarios_usuario($data->personal_id);
 
@@ -288,10 +289,10 @@ class Clientes extends ResourceController
                 }
 
                 return $this->respondCreated([
-                    'status' => 201,
+                    'status' => 'success',
                     'message' => 'Prospecto creado correctamente',
-                    'result' => null
-                ]);
+                    'data' => null
+                ], 201);
             } else {
                 $prospecto->update($id, [
                     'fecha_contacto' => $data->fechaContacto,
@@ -311,14 +312,18 @@ class Clientes extends ResourceController
                 }
 
                 return $this->respond([
-                    'status' => 200,
+                    'status' => 'success',
                     'message' => 'Prospecto actualizado correctamente',
-                    'result' => null
-                ]);
+                    'data' => null
+                ], 200);
             }
         } catch (\Exception $e) {
             $persona->db->transRollback();
-            return $this->failServerError('Error interno del servidor: ' . $e->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'data' => null
+            ], 500);
         }
     }
 
