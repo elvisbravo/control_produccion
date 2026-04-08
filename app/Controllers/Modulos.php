@@ -15,12 +15,16 @@ class Modulos extends ResourceController
             $modulo = new ModulosModel();
             $modulos = $modulo->where('estado', true)->orderBy('id', 'ASC')->findAll();
             return $this->respond([
-                'status' => 200,
+                'status' => 'sucess',
                 'message' => 'Modulos obtenidos correctamente',
-                'result' => $modulos
-            ]);
+                'data' => $modulos
+            ], 200);
         } catch (\Throwable $th) {
-            return $this->failServerError('Error interno del servidor');
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error interno del servidor: ' . $th->getMessage(),
+                'data' => []
+            ], 500);
         }
     }
 
@@ -54,10 +58,10 @@ class Modulos extends ResourceController
                 ]);
             } else {
                 $modulo->update($id, [
-                    'nombre_modulo' => $data->nombre,
+                    'modulo' => $data->nombre,
                     'url' => $data->url,
                     'icono' => $data->icono,
-                    'padre' => $data->padre,
+                    'idpadre' => $data->id_padre,
                     'orden' => $data->orden
                 ]);
 
@@ -97,12 +101,16 @@ class Modulos extends ResourceController
             $modulo = new ModulosModel();
             $modulos = $modulo->where('estado', true)->where('idpadre', 0)->orderBy('id', 'ASC')->findAll();
             return $this->respond([
-                'status' => 200,
+                'status' => 'success',
                 'message' => 'Modulos obtenidos correctamente',
-                'result' => $modulos
-            ]);
-        } catch (\Throwable $th) {
-            return $this->failServerError('Error interno del servidor');
+                'data' => $modulos
+            ], 200);
+        } catch (\Exception $e) {
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error interno del servidor: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
         }
     }
 }

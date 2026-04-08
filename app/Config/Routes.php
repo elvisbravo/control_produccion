@@ -90,6 +90,7 @@ $routes->post('modulos/save', 'Modulos::createModulo');
 $routes->get('modulos/get-padres', 'Modulos::getModulosPadres');
 $routes->get('modulos/get-all', 'Modulos::getModulos');
 $routes->get('modulos/get-row/(:num)', 'Modulos::getModulo/$1');
+$routes->get('modulo/delete/(:num)', 'Modulos::deleteModulo/$1');
 
 $routes->get('acciones/get-all', 'Acciones::getAcciones');
 $routes->post('acciones/save', 'Acciones::create');
