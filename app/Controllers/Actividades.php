@@ -445,6 +445,87 @@ class Actividades extends ResourceController
         }
     }
 
+    public function ultimoHorarioFechaVentas($usuario_id, $fecha, $id_tarea)
+    {
+        try {
+            $db = \Config\Database::connect();
+            $tareaModel = new TareaModel();
+            
+            // 1. Obtener la duración de la nueva tarea
+            $tarea = $tareaModel->find($id_tarea);
+            if (!$tarea) {
+                return $this->respond([
+                    'status' => 'error',
+                    'message' => "No se encontró la tarea con id $id_tarea."
+                ], 404);
+            }
+            $duracion_requerida = (int)$tarea['horas_estimadas'];
+
+            // 2. Buscar la última tarea de VENTAS en esa fecha para ese usuario
+            $ultima_tarea = $db->table('horario_usuario')
+                ->where('usuario_id', $usuario_id)
+                ->where('fecha', $fecha)
+                ->where('categoria', 'VENTAS')
+                ->where('estado', true)
+                ->orderBy('hora_fin', 'DESC')
+                ->get()
+                ->getRow();
+
+            // Definimos la hora desde la cual empezar a contar disponibilidad
+            $hora_referencia = '08:00:00';
+            if ($ultima_tarea) {
+                $hora_referencia = $ultima_tarea->hora_fin;
+            }
+
+            $current_dt = new \DateTime($fecha . ' ' . $hora_referencia);
+            
+            // 3. Calcular disponibilidad en bloques hasta las 19:00 (7pm)
+            $dia_semana = (int)date('N', strtotime($fecha));
+            $bloques = [];
+            
+            if ($dia_semana >= 1 && $dia_semana <= 5) {
+                $bloques = [['08:00:00', '13:00:00'], ['15:00:00', '19:00:00']];
+            } elseif ($dia_semana == 6) {
+                $bloques = [['08:00:00', '13:00:00']];
+            }
+
+            $minutos_disponibles = 0;
+            foreach ($bloques as $bloque) {
+                $inicio_bloque = new \DateTime($fecha . ' ' . $bloque[0]);
+                $fin_bloque    = new \DateTime($fecha . ' ' . $bloque[1]);
+
+                if ($current_dt < $fin_bloque) {
+                    $punto_inicio = ($current_dt > $inicio_bloque) ? $current_dt : $inicio_bloque;
+                    $diff = $punto_inicio->diff($fin_bloque);
+                    $minutos_disponibles += ($diff->h * 60) + $diff->i;
+                }
+            }
+
+            if ($minutos_disponibles >= $duracion_requerida) {
+                return $this->respond([
+                    'status' => 'success',
+                    'message' => 'Disponibilidad confirmada',
+                    'data' => []
+                ], 200);
+            } else {
+                $faltantes = $duracion_requerida - $minutos_disponibles;
+                return $this->respond([
+                    'status' => 'insufficient_time',
+                    'message' => "Faltan $faltantes minutos para completar la tarea hoy hasta las 7pm.",
+                    'data' => [
+                        'minutos_faltantes' => $faltantes
+                    ]
+                ], 200);
+            }
+
+        } catch (\Exception $e) {
+            return $this->respond([
+                'status' => 'error',
+                'message' => 'Error interno del servidor: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function fueraHorarioLaboral()
     {
         try {

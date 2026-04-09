@@ -266,12 +266,12 @@ if (!function_exists('reorganizar_horarios_usuario')) {
 
         if (empty($actividadesPendientes)) return true;
 
-        // 2. Eliminar (soft delete) los horarios programados actuales para re-planificarlos
+        // 2. Eliminar los horarios programados actuales para re-planificarlos (Evita duplicados visibles)
         $db->table('horario_usuario')
             ->where('usuario_id', $usuario_id)
             ->where('tipo', 'programado')
             ->where('estado', true)
-            ->update(['estado' => false]);
+            ->delete();
 
         // 3. Re-asignar cada actividad una por una. 
         foreach ($actividadesPendientes as $act) {

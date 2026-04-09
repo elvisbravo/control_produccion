@@ -111,6 +111,34 @@ class Clientes extends ResourceController
                 $celular = $data->celular;
                 $fecha_inicio_manual = $data->fecha_inicio_manual ?? '';
                 $hora_inicio_manual = $data->hora_inicio_manual ?? '';
+                $usar_ultima_tarea = $data->usar_ultima_tarea ?? 0;
+
+                if ($usar_ultima_tarea == 1) {
+                    $fecha_consulta = (!empty($fecha_inicio_manual)) ? $fecha_inicio_manual : date('Y-m-d');
+                    
+                    $db = \Config\Database::connect();
+                    $ultima_tarea = $db->table('horario_usuario')
+                        ->where('usuario_id', $data->personal_id)
+                        ->where('fecha', $fecha_consulta)
+                        ->where('estado', true)
+                        ->orderBy('hora_fin', 'DESC')
+                        ->get()
+                        ->getRow();
+
+                    if ($ultima_tarea) {
+                        $fecha_inicio_manual = $ultima_tarea->fecha;
+                        $hora_inicio_manual = $ultima_tarea->hora_fin;
+                    } else {
+                        // Si no hay tareas ese día, y no se especificó fecha, usamos hoy a las 08:00
+                        if (empty($fecha_inicio_manual)) {
+                            $fecha_inicio_manual = date('Y-m-d');
+                        }
+                        // Si no hay tareas, podemos dejar la hora de inicio manual como estaba o ponerla por defecto
+                        if (empty($hora_inicio_manual)) {
+                            $hora_inicio_manual = '08:00:00';
+                        }
+                    }
+                }
 
                 $data_tarea = $tarea->find($data->tarea_id);
                 $name_tarea = $data_tarea['nombre'];
@@ -214,23 +242,7 @@ class Clientes extends ResourceController
                 }
 
                 $actividad->insert($data_actividad);
-
-
                 $id_actividad = $actividad->getInsertID();
-
-                // 🗓️ Bloqueo de agenda si se especificó fecha/hora de canje (independiente de la modalidad)
-                if (!empty($data->fecha_canje) && !empty($data->hora_inicio_canje)) {
-                    
-                    crear_horario(
-                        $id_actividad, 
-                        $data->fecha_canje, 
-                        $data->hora_inicio_canje, 
-                        $hora_fin_canje, 
-                        $data->personal_id, 
-                        (int)$data_tarea['horas_estimadas'], 
-                        'canje'
-                    );
-                }
 
                 $data_historial_actividad_estados = [
                     "actividad_id" => $id_actividad,
@@ -245,15 +257,21 @@ class Clientes extends ResourceController
 
                 crear_notificacion($data->personal_id, $data->usuarioVentaId, 'Potencial Cliente', $name_tarea, 'info', 1);
 
-                // 🚀 Asignamos horas de trabajo si es jornada Laboral O si se ha especificado un inicio manual
+                // 1. Calcular minutos remanentes AL PRINCIPIO
+                $minutos_remanentes = (int)($data->minutos_faltantes ?? 0);
+
+                // 2. 🚀 Asignamos horas de trabajo si es jornada Laboral O si se ha especificado un inicio manual
                 if(($check_personal == "0" && $tipo_jornada == 'Laboral') || (!empty($fecha_inicio_manual) && !empty($hora_inicio_manual))) {
 
-                    asignar_horas_trabajo($data->personal_id, $data_tarea['horas_estimadas'], $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual, 'VENTAS');
+                    $duracion_estimada = (int)$data_tarea['horas_estimadas'] - $minutos_remanentes;
+                    if ($duracion_estimada > 0) {
+                        asignar_horas_trabajo($data->personal_id, $duracion_estimada, $id_actividad, 'programado', null, $fecha_inicio_manual, $hora_inicio_manual, 'VENTAS');
+                    }
 
                     reorganizar_horarios_usuario($data->personal_id);
 
                 } elseif($check_personal == "1") {
-                    $resignaciones = new ResignacionesModel();
+                    $resignaciones = new \App\Models\ResignacionesModel();
 
                     $data_re = [
                         'usuario_id' => $data->personal_id,
@@ -268,6 +286,81 @@ class Clientes extends ResourceController
                     ];
 
                     $resignaciones->insert($data_re);
+                }
+
+                // 3. ⚡ Manejo de Tiempo Insuficiente (Bono / Canje) - MOVIDO AL FINAL PARA EVITAR QUE REORGANIZAR LO ELIMINE
+                if (!empty($data->opcion_faltante) && $minutos_remanentes > 0) {
+                    $horasExtrasModel = new \App\Models\HorasExtrasModel();
+                    
+                    $fecha_canje_faltante = $data->fecha_canje_faltante ?? '';
+                    $hora_canje_faltante = $data->hora_canje_faltante ?? '';
+
+                    // Determinar estado de la hora extra
+                    $estado_extra = (empty($fecha_canje_faltante)) ? 'pendiente' : 'aprobado';
+
+                    $horasExtrasModel->insert([
+                        'actividad_id' => $id_actividad,
+                        'usuario_id'   => $data->personal_id,
+                        'fecha'        => $fecha_inicio_manual,
+                        'minutos'      => $minutos_remanentes,
+                        'tipo'         => $data->opcion_faltante, 
+                        'estado'       => $estado_extra
+                    ]);
+
+                    // Si hay fecha de recuperación futura
+                    if (!empty($fecha_canje_faltante) && !empty($hora_canje_faltante)) {
+                        
+                        $inicio_rf = new \DateTime($fecha_canje_faltante . ' ' . $hora_canje_faltante);
+                        $fin_rf = clone $inicio_rf;
+                        $fin_rf->modify("+{$minutos_remanentes} minutes");
+
+                        crear_horario(
+                            $id_actividad, 
+                            $fecha_canje_faltante, 
+                            $hora_canje_faltante, 
+                            $fin_rf->format('H:i:s'), 
+                            $data->personal_id, 
+                            $minutos_remanentes, 
+                            'CANJE',
+                            null,
+                            'VENTAS'
+                        );
+                    } else {
+                        // CANJE NORMAL (Hoy después de las 7 PM o del fin de la tarea programada)
+                        $fecha_hoy = !empty($fecha_inicio_manual) ? $fecha_inicio_manual : date('Y-m-d');
+                        $db = \Config\Database::connect();
+                        
+                        // Buscamos el fin de la parte 'programada' de esta actividad para empezar el canje justo después
+                        $ultima = $db->table('horario_usuario')
+                            ->where('usuario_id', $data->personal_id)
+                            ->where('fecha', $fecha_hoy)
+                            ->where('estado', true)
+                            ->orderBy('hora_fin', 'DESC')
+                            ->get()
+                            ->getRow();
+                        
+                        $hora_ref = ($ultima && $ultima->hora_fin > '19:00:00') ? $ultima->hora_fin : '19:00:00';
+                        $inicio_rem = new \DateTime($fecha_hoy . ' ' . $hora_ref);
+                        $fin_rem = clone $inicio_rem;
+                        $fin_rem->modify("+{$minutos_remanentes} minutes");
+
+                        crear_horario(
+                            $id_actividad, 
+                            $fecha_hoy, 
+                            $inicio_rem->format('H:i:s'), 
+                            $fin_rem->format('H:i:s'), 
+                            $data->personal_id, 
+                            $minutos_remanentes, 
+                            'CANJE',
+                            null,
+                            'VENTAS'
+                        );
+                    }
+                }
+
+                // 🗓️ Bloqueo de agenda (modalidad fuera de horario)
+                if (!empty($data->fecha_canje) && !empty($data->hora_inicio_canje)) {
+                    crear_horario($id_actividad, $data->fecha_canje, $data->hora_inicio_canje, $hora_fin_canje, $data->personal_id, (int)$data_tarea['horas_estimadas'], 'canje', null, 'VENTAS');
                 }
 
                 // Sincronizar la fecha de inicio del historial con la fecha de inicio de la actividad proyectada

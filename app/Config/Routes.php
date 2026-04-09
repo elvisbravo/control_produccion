@@ -83,6 +83,9 @@ $routes->post('actividad/update-link-drive', 'Actividades::updateLinkDrive');
 $routes->post('actividad/get-estados-actividades', 'Actividades::getEstadosActividades');
 $routes->post('actividad/update-estado', 'Actividades::updateEstado');
 $routes->get('actividad/get-ultimo-horario/(:num)/(:num)', 'Actividades::getUltimoHorario/$1/$2');
+$routes->get('actividad/get-ultimo-horario-ventas/(:num)/(:any)/(:num)', 'Actividades::ultimoHorarioFechaVentas/$1/$2/$3');
+
+$routes->get('actividad/get-ultimo-horario-ventas/(:num)/(:any)/(:num)', 'Actividades::ultimoHorarioFechaVentas/$1/$2/$3');
 
 $routes->get('ia/disponibilidad', 'IAController::disponibilidad');
 $routes->post('ia/verificar-tarea', 'IAController::verificarTarea');
